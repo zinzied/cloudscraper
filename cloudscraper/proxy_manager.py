@@ -67,10 +67,15 @@ class ProxyManager:
         if self.rotation_strategy == 'random':
             proxy = random.choice(available_proxies)
         elif self.rotation_strategy == 'smart':
-            # Choose the proxy with the best success rate
-            proxy = max(available_proxies, 
-                        key=lambda p: (self.proxy_stats[p]['success'] / 
-                                      (self.proxy_stats[p]['success'] + self.proxy_stats[p]['failure'] + 0.1)))
+            # Choose the proxy with the best success rate and least recent usage
+            proxy = max(available_proxies,
+                        key=lambda p: self._calculate_proxy_score(p))
+        elif self.rotation_strategy == 'weighted':
+            # Weighted random selection based on success rate
+            proxy = self._weighted_random_selection(available_proxies)
+        elif self.rotation_strategy == 'round_robin_smart':
+            # Round robin but skip recently failed proxies
+            proxy = self._smart_round_robin(available_proxies)
         else:  # sequential
             if self.current_index >= len(available_proxies):
                 self.current_index = 0
@@ -132,6 +137,138 @@ class ProxyManager:
         if proxy_url:
             self.proxy_stats[proxy_url]['failure'] += 1
             self.banned_proxies[proxy_url] = time.time()
+
+    # ------------------------------------------------------------------------------- #
+
+    def _calculate_proxy_score(self, proxy_url):
+        """
+        Calculate a score for proxy selection in smart mode
+
+        :param proxy_url: The proxy URL to score
+        :return: Score (higher is better)
+        """
+        stats = self.proxy_stats[proxy_url]
+        total_requests = stats['success'] + stats['failure']
+
+        if total_requests == 0:
+            # New proxy gets high score
+            return 1.0
+
+        # Success rate component (0-1)
+        success_rate = stats['success'] / total_requests
+
+        # Recency component (prefer less recently used proxies)
+        time_since_last_use = time.time() - stats['last_used']
+        recency_score = min(time_since_last_use / 300, 1.0)  # Normalize to 5 minutes
+
+        # Combine scores (weighted)
+        return (success_rate * 0.7) + (recency_score * 0.3)
+
+    def _weighted_random_selection(self, available_proxies):
+        """
+        Select proxy using weighted random based on success rates
+
+        :param available_proxies: List of available proxy URLs
+        :return: Selected proxy URL
+        """
+        if not available_proxies:
+            return None
+
+        weights = []
+        for proxy in available_proxies:
+            score = self._calculate_proxy_score(proxy)
+            weights.append(max(score, 0.1))  # Minimum weight to give all proxies a chance
+
+        # Weighted random selection
+        total_weight = sum(weights)
+        if total_weight == 0:
+            return random.choice(available_proxies)
+
+        r = random.uniform(0, total_weight)
+        cumulative_weight = 0
+
+        for i, weight in enumerate(weights):
+            cumulative_weight += weight
+            if r <= cumulative_weight:
+                return available_proxies[i]
+
+        return available_proxies[-1]  # Fallback
+
+    def _smart_round_robin(self, available_proxies):
+        """
+        Smart round robin that skips recently failed proxies
+
+        :param available_proxies: List of available proxy URLs
+        :return: Selected proxy URL
+        """
+        if not available_proxies:
+            return None
+
+        # Filter out proxies that failed recently
+        current_time = time.time()
+        good_proxies = []
+
+        for proxy in available_proxies:
+            stats = self.proxy_stats[proxy]
+            if stats['failure'] == 0:
+                good_proxies.append(proxy)
+            else:
+                # Check if enough time has passed since last failure
+                time_since_failure = current_time - self.banned_proxies.get(proxy, 0)
+                if time_since_failure > 60:  # 1 minute cooldown
+                    good_proxies.append(proxy)
+
+        # Use good proxies if available, otherwise fall back to all available
+        proxies_to_use = good_proxies if good_proxies else available_proxies
+
+        # Round robin through the filtered list
+        if self.current_index >= len(proxies_to_use):
+            self.current_index = 0
+        proxy = proxies_to_use[self.current_index]
+        self.current_index += 1
+
+        return proxy
+
+    def get_proxy_health_report(self):
+        """
+        Get a health report of all proxies
+
+        :return: Dictionary with proxy health information
+        """
+        report = {
+            'total_proxies': len(self.proxies),
+            'available_proxies': 0,
+            'banned_proxies': len(self.banned_proxies),
+            'proxy_details': {}
+        }
+
+        current_time = time.time()
+
+        for proxy in self.proxies:
+            stats = self.proxy_stats[proxy]
+            total_requests = stats['success'] + stats['failure']
+            success_rate = (stats['success'] / total_requests) if total_requests > 0 else 0
+
+            is_banned = proxy in self.banned_proxies
+            ban_time_left = 0
+
+            if is_banned:
+                ban_time_left = max(0, self.ban_time - (current_time - self.banned_proxies[proxy]))
+            else:
+                report['available_proxies'] += 1
+
+            report['proxy_details'][proxy] = {
+                'success_count': stats['success'],
+                'failure_count': stats['failure'],
+                'success_rate': success_rate,
+                'total_requests': total_requests,
+                'last_used': stats['last_used'],
+                'is_banned': is_banned,
+                'ban_time_left': ban_time_left,
+                'score': self._calculate_proxy_score(proxy)
+            }
+
+        return report
 
     # ------------------------------------------------------------------------------- #
 

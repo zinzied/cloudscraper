@@ -34,10 +34,16 @@ from .turnstile import CloudflareTurnstile
 from .user_agent import User_Agent
 from .proxy_manager import ProxyManager
 from .stealth import StealthMode
+from .metrics import MetricsCollector
+from .async_cloudscraper import AsyncCloudScraper, create_async_scraper
+from .performance import PerformanceMonitor, PerformanceProfiler
+from .challenge_response_system import ChallengeResponseSystem
+from .advanced_fingerprinting import AdvancedFingerprinter
+from .behavioral_simulation import InteractionSimulator
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.0.0'
+__version__ = '3.1.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -197,6 +203,23 @@ class CloudScraper(Session):
             behavioral_patterns=stealth_options.get('behavioral_patterns', True)
         )
 
+        # Clean up any remaining custom parameters that shouldn't go to Session
+        custom_params = [
+            'metrics_history_size', 'config_file', 'config_dict',
+            'adaptive_delays', 'fingerprint_resistance', 'request_signing',
+            'enable_metrics', 'enable_performance_monitoring', 'enable_advanced_challenges',
+            'solve_depth', 'delay', 'double_down', 'disable_cloudflare_v1', 'disable_cloudflare_v2',
+            'disable_cloudflare_v3', 'disable_turnstile', 'session_refresh_interval',
+            'auto_refresh_on_403', 'max_403_retries', 'min_request_interval',
+            'max_concurrent_requests', 'rotate_tls_ciphers', 'enable_stealth',
+            'stealth_options', 'rotating_proxies', 'proxy_options', 'cipher_suite',
+            'ecdh_curve', 'allow_brotli', 'browser', 'captcha', 'max_retries',
+            'retry_backoff_factor', 'retry_on_status', 'connect_timeout',
+            'read_timeout', 'total_timeout', 'custom_headers'
+        ]
+        for param in custom_params:
+            kwargs.pop(param, None)
+
         # Initialize the session
         super(CloudScraper, self).__init__(*args, **kwargs)
 
@@ -227,6 +250,33 @@ class CloudScraper(Session):
         self.cloudflare_v2 = CloudflareV2(self)
         self.cloudflare_v3 = CloudflareV3(self)
         self.turnstile = CloudflareTurnstile(self)
+
+        # Initialize metrics collection
+        self.enable_metrics = kwargs.pop('enable_metrics', True)
+        if self.enable_metrics:
+            self.metrics = MetricsCollector(max_history_size=kwargs.pop('metrics_history_size', 1000))
+        else:
+            self.metrics = None
+
+        # Initialize performance monitoring
+        self.enable_performance_monitoring = kwargs.pop('enable_performance_monitoring', True)
+        if self.enable_performance_monitoring:
+            self.performance_monitor = PerformanceMonitor(self)
+            self.performance_monitor.start_monitoring()
+        else:
+            self.performance_monitor = None
+
+        # Initialize advanced challenge handling
+        self.enable_advanced_challenges = kwargs.pop('enable_advanced_challenges', True)
+        if self.enable_advanced_challenges:
+            browser_type = 'chrome'  # Default browser type
+            self.challenge_system = ChallengeResponseSystem(self, browser_type)
+            self.advanced_fingerprinter = AdvancedFingerprinter(browser_type)
+            self.interaction_simulator = InteractionSimulator()
+        else:
+            self.challenge_system = None
+            self.advanced_fingerprinter = None
+            self.interaction_simulator = None
 
         # Allow pickle serialization
         copyreg.pickle(ssl.SSLContext, lambda obj: (obj.__class__, (obj.protocol,)))
@@ -308,6 +358,13 @@ class CloudScraper(Session):
         # Apply stealth techniques if enabled
         if self.enable_stealth:
             kwargs = self.stealth_mode.apply_stealth_techniques(method, url, **kwargs)
+
+        # Add advanced fingerprinting headers if enabled
+        if self.advanced_fingerprinter:
+            fp_headers = self.advanced_fingerprinter.get_fingerprint_headers()
+            if 'headers' not in kwargs:
+                kwargs['headers'] = {}
+            kwargs['headers'].update(fp_headers)
 
         # Track request count
         self.request_count += 1
@@ -391,6 +448,30 @@ class CloudScraper(Session):
         # ------------------------------------------------------------------------------- #
         # Handle Cloudflare challenges
         # ------------------------------------------------------------------------------- #
+
+        # Try advanced challenge handling first (if enabled)
+        if self.challenge_system and self._is_challenge_response(response):
+            if self.debug:
+                print('🛡️ Cloudflare challenge detected, using advanced bypass system...')
+
+            # CRITICAL FIX: Decrement concurrent request counter before challenge handling
+            if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                self.current_concurrent_requests -= 1
+                if self.debug:
+                    print(f'🔢 Concurrent requests decremented (advanced challenge): {self.current_concurrent_requests}')
+
+            try:
+                challenge_response = self.challenge_system.handle_challenge_response(response)
+                if challenge_response and challenge_response.status_code == 200:
+                    if self.debug:
+                        print('✅ Advanced challenge bypass successful!')
+                    return challenge_response
+                else:
+                    if self.debug:
+                        print('⚠️ Advanced challenge bypass failed, falling back to standard methods...')
+            except Exception as e:
+                if self.debug:
+                    print(f'❌ Advanced challenge bypass error: {e}, falling back to standard methods...')
 
         # Check for loop protection
         if self._solveDepthCnt >= self.solveDepth:
@@ -712,6 +793,77 @@ class CloudScraper(Session):
         except Exception as e:
             if self.debug:
                 print(f'⚠️ TLS cipher rotation failed: {e}')
+
+    # ------------------------------------------------------------------------------- #
+    # Metrics and monitoring methods
+    # ------------------------------------------------------------------------------- #
+
+    def get_metrics(self):
+        """Get current performance metrics"""
+        if self.metrics:
+            return self.metrics.get_current_stats()
+        return {}
+
+    def get_proxy_stats(self):
+        """Get proxy performance statistics"""
+        if self.metrics:
+            return self.metrics.get_proxy_stats()
+        return {}
+
+    def get_health_status(self):
+        """Get overall health status and recommendations"""
+        if self.metrics:
+            return self.metrics.get_health_status()
+        return {'status': 'unknown', 'health_score': 0, 'issues': [], 'recommendations': []}
+
+    def export_metrics(self, format='json'):
+        """Export metrics in specified format"""
+        if self.metrics:
+            return self.metrics.export_metrics(format)
+        return '{}' if format == 'json' else ''
+
+    def reset_metrics(self):
+        """Reset all collected metrics"""
+        if self.metrics:
+            self.metrics.reset_metrics()
+
+    def get_proxy_health_report(self):
+        """Get detailed proxy health report"""
+        return self.proxy_manager.get_proxy_health_report()
+
+    def get_performance_report(self):
+        """Get comprehensive performance report"""
+        if self.performance_monitor:
+            return self.performance_monitor.get_performance_report()
+        return "Performance monitoring is disabled"
+
+    def check_performance(self):
+        """Check current performance status"""
+        if self.performance_monitor:
+            return self.performance_monitor.check_performance()
+        return {}
+
+    def optimize_performance(self):
+        """Manually trigger performance optimization"""
+        if self.performance_monitor:
+            return self.performance_monitor.optimize_performance()
+        return {}
+
+    def _is_challenge_response(self, response):
+        """Check if response contains a Cloudflare challenge"""
+        if response.status_code != 403:
+            return False
+
+        challenge_indicators = [
+            'Just a moment...',
+            'Checking your browser',
+            'window._cf_chl_opt',
+            'challenge-platform',
+            'cf-mitigated'
+        ]
+
+        content_lower = response.text.lower()
+        return any(indicator.lower() in content_lower for indicator in challenge_indicators)
 
     # ------------------------------------------------------------------------------- #
 

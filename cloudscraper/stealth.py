@@ -72,7 +72,7 @@ class StealthMode:
     def apply_stealth_techniques(self, method, url, **kwargs):
         """Apply stealth stuff to make requests look human"""
 
-        # Wait a bit between requests
+        # Wait a bit between requests with adaptive timing
         if self.human_like_delays:
             self._wait_like_human(url)
 
@@ -91,6 +91,10 @@ class StealthMode:
         # Add some behavioral stuff
         if self.behavioral_patterns:
             kwargs = self._add_behavior_headers(method, url, kwargs)
+
+        # Add enhanced stealth features
+        kwargs = self.simulate_mouse_movement(kwargs)
+        kwargs = self.add_fingerprint_resistance(kwargs)
 
         # Keep track of requests
         self.request_count += 1
@@ -310,6 +314,97 @@ class StealthMode:
         reading_time = (words / self.reading_wpm) * 60
         reading_time *= random.uniform(0.8, 1.2)  # add some variation
         return max(1.0, min(reading_time, 30.0))
+
+    def get_adaptive_delay(self, url=None, content_type=None):
+        """
+        Calculate adaptive delay based on content type and browsing patterns
+        """
+        base_delay = random.uniform(self.min_delay, self.max_delay)
+
+        # Adjust based on content type
+        if content_type:
+            if 'json' in content_type or 'api' in str(url):
+                # API calls are typically faster
+                base_delay *= 0.5
+            elif 'image' in content_type:
+                # Images load quickly
+                base_delay *= 0.3
+            elif 'text/html' in content_type:
+                # HTML pages take time to read
+                base_delay *= 1.2
+
+        # Adjust based on time of day (simulate human activity patterns)
+        import datetime
+        current_hour = datetime.datetime.now().hour
+        if 9 <= current_hour <= 17:  # Business hours
+            base_delay *= random.uniform(0.8, 1.0)  # Slightly faster
+        elif 22 <= current_hour or current_hour <= 6:  # Night time
+            base_delay *= random.uniform(1.2, 1.8)  # Slower, tired user
+
+        # Adjust based on request frequency
+        if len(self.visit_times) > 1:
+            recent_requests = [t for t in self.visit_times if time.time() - t < 60]
+            if len(recent_requests) > 10:  # High frequency
+                base_delay *= random.uniform(1.5, 2.0)  # Slow down
+
+        return min(base_delay, 45.0)  # Cap at 45 seconds
+
+    def simulate_mouse_movement(self, kwargs):
+        """
+        Add headers that simulate mouse movement and interaction
+        """
+        headers = kwargs.get('headers', {})
+
+        # Simulate viewport focus
+        if random.random() < 0.3:
+            headers['X-Viewport-Focus'] = 'true'
+
+        # Simulate scroll position
+        if random.random() < 0.4:
+            scroll_y = random.randint(0, 2000)
+            headers['X-Scroll-Position'] = str(scroll_y)
+
+        # Simulate mouse position (relative to viewport)
+        if random.random() < 0.2:
+            mouse_x = random.randint(0, self.viewport_w)
+            mouse_y = random.randint(0, self.viewport_h)
+            headers['X-Mouse-Position'] = f'{mouse_x},{mouse_y}'
+
+        kwargs['headers'] = headers
+        return kwargs
+
+    def add_fingerprint_resistance(self, kwargs):
+        """
+        Add headers and techniques to resist browser fingerprinting
+        """
+        headers = kwargs.get('headers', {})
+
+        # Randomize Accept header slightly
+        if 'Accept' in headers and random.random() < 0.1:
+            accept_parts = headers['Accept'].split(',')
+            if len(accept_parts) > 1:
+                # Slightly shuffle quality values
+                for i, part in enumerate(accept_parts):
+                    if 'q=' in part and random.random() < 0.3:
+                        q_val = random.uniform(0.8, 0.9)
+                        accept_parts[i] = part.split('q=')[0] + f'q={q_val:.1f}'
+                headers['Accept'] = ','.join(accept_parts)
+
+        # Add canvas fingerprint resistance
+        if random.random() < 0.1:
+            headers['X-Canvas-Fingerprint'] = 'blocked'
+
+        # Add WebGL fingerprint resistance
+        if random.random() < 0.1:
+            headers['X-WebGL-Fingerprint'] = 'masked'
+
+        # Randomize connection type
+        connection_types = ['wifi', 'cellular', 'ethernet', 'unknown']
+        if random.random() < 0.2:
+            headers['X-Connection-Type'] = random.choice(connection_types)
+
+        kwargs['headers'] = headers
+        return kwargs
 
 
 

@@ -72,6 +72,54 @@ class CloudflareV3Error(CloudflareException):
     Raise an error for problem with Cloudflare v3 JavaScript VM challenge.
     """
 
+
+class ProxyError(CloudflareException):
+    """Base class for proxy-related errors"""
+
+
+class ProxyConnectionError(ProxyError):
+    """Raised when proxy connection fails"""
+
+
+class ProxyAuthenticationError(ProxyError):
+    """Raised when proxy authentication fails"""
+
+
+class ProxyTimeoutError(ProxyError):
+    """Raised when proxy request times out"""
+
+
+class AllProxiesBannedError(ProxyError):
+    """Raised when all available proxies are banned"""
+
+
+class StealthModeError(CloudflareException):
+    """Raised when stealth mode encounters an error"""
+
+
+class RateLimitError(CloudflareException):
+    """Raised when rate limiting is triggered"""
+
+
+class SessionExpiredError(CloudflareException):
+    """Raised when session has expired and needs refresh"""
+
+
+class ChallengeTimeoutError(CloudflareException):
+    """Raised when challenge solving times out"""
+
+
+class InvalidResponseError(CloudflareException):
+    """Raised when response format is invalid or unexpected"""
+
+
+class ConfigurationError(CloudflareException):
+    """Raised when configuration is invalid"""
+
+
+class InterpreterError(CloudflareException):
+    """Raised when JavaScript interpreter encounters an error"""
+
 # ------------------------------------------------------------------------------- #
 
 

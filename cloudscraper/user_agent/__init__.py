@@ -83,7 +83,6 @@ class User_Agent():
             # Fallback for executable environments
             try:
                 # Try alternative paths for executables
-                import sys
                 if getattr(sys, 'frozen', False):
                     # Running in a PyInstaller bundle
                     bundle_dir = sys._MEIPASS
