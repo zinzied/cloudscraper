@@ -214,8 +214,12 @@ class DeviceFingerprinter:
         avail_height = screen_height - random.randint(30, 80)
         
         # Generate viewport size (browser window)
-        viewport_width = random.randint(1200, screen_width - 100)
-        viewport_height = random.randint(600, avail_height - 100)
+        # Ensure valid ranges by using max() to prevent invalid randint ranges
+        max_viewport_width = max(1200, screen_width - 100)
+        viewport_width = random.randint(1200, max_viewport_width)
+
+        max_viewport_height = max(600, avail_height - 100)
+        viewport_height = random.randint(600, max_viewport_height)
         
         return {
             'screen': {
