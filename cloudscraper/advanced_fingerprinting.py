@@ -198,6 +198,544 @@ class DeviceFingerprinter:
         
         # Common screen resolutions
         self.screen_resolutions = [
+            (1920, 1080), (1366, 768), (1536, 864), (1440, 900),
+            (1280, 720), (1024, 768), (2560, 1440), (3840, 2160)
+        ]
+        
+        # Browser-specific characteristics
+        self.browser_characteristics = {
+            'chrome': {
+                'hardwareConcurrency': [4, 8, 12, 16],
+                'platform': ['Win32', 'MacIntel', 'Linux x86_64'],
+                'cookieEnabled': True,
+                'doNotTrack': [None, '1'],
+                'maxTouchPoints': [0, 1, 5, 10]
+            },
+            'firefox': {
+                'hardwareConcurrency': [4, 8, 12, 16],
+                'platform': ['Win32', 'MacIntel', 'Linux x86_64'],
+                'cookieEnabled': True,
+                'doNotTrack': ['unspecified', '1'],
+                'maxTouchPoints': [0]
+            },
+            'safari': {
+                'hardwareConcurrency': [4, 8, 12],
+                'platform': ['MacIntel', 'iPhone', 'iPad'],
+                'cookieEnabled': True,
+                'doNotTrack': [None, '1'],
+                'maxTouchPoints': [0, 5]
+            }
+        }
+    
+    def generate_device_fingerprint(self) -> Dict[str, Any]:
+        """Generate comprehensive device fingerprint"""
+        screen_width, screen_height = random.choice(self.screen_resolutions)
+        
+        # Calculate available screen dimensions (subtract taskbar/dock)
+        avail_width = screen_width
+        avail_height = screen_height - random.randint(30, 80)
+        
+        # Calculate color depth and pixel depth
+        color_depth = random.choice([24, 32])
+        pixel_depth = color_depth
+        
+        # Get browser characteristics
+        browser_chars = self.browser_characteristics.get(
+            self.browser_type, self.browser_characteristics['chrome']
+        )
+        
+        # Generate timezone offset (in minutes)
+        timezone_offsets = [-480, -420, -360, -300, -240, -180, -120, -60, 0, 60, 120, 180, 240, 300, 360, 480, 540, 600]
+        timezone_offset = random.choice(timezone_offsets)
+        
+        # Generate memory info
+        device_memory = random.choice([2, 4, 6, 8, 16, 32])
+        
+        fingerprint = {
+            # Screen properties
+            'screen': {
+                'width': screen_width,
+                'height': screen_height,
+                'availWidth': avail_width,
+                'availHeight': avail_height,
+                'colorDepth': color_depth,
+                'pixelDepth': pixel_depth
+            },
+            
+            # Navigator properties
+            'navigator': {
+                'hardwareConcurrency': random.choice(browser_chars['hardwareConcurrency']),
+                'platform': random.choice(browser_chars['platform']),
+                'cookieEnabled': browser_chars['cookieEnabled'],
+                'doNotTrack': random.choice(browser_chars['doNotTrack']),
+                'maxTouchPoints': random.choice(browser_chars['maxTouchPoints']),
+                'deviceMemory': device_memory if random.random() < 0.8 else None
+            },
+            
+            # Timezone
+            'timezone': {
+                'offset': timezone_offset,
+                'name': self._get_timezone_name(timezone_offset)
+            },
+            
+            # Date properties
+            'date': {
+                'timezoneOffset': timezone_offset
+            },
+            
+            # Performance timing (simulated)
+            'performance': self._generate_performance_timing(),
+            
+            # Audio context fingerprint
+            'audio': self._generate_audio_fingerprint(),
+            
+            # Media devices
+            'media': self._generate_media_devices(),
+            
+            # Battery API (if supported)
+            'battery': self._generate_battery_info()
+        }
+        
+        return fingerprint
+    
+    def _get_timezone_name(self, offset: int) -> str:
+        """Get timezone name from offset"""
+        timezone_map = {
+            -480: 'America/Los_Angeles',
+            -420: 'America/Denver', 
+            -360: 'America/Chicago',
+            -300: 'America/New_York',
+            0: 'Europe/London',
+            60: 'Europe/Paris',
+            120: 'Europe/Berlin',
+            480: 'Asia/Shanghai',
+            540: 'Asia/Tokyo'
+        }
+        return timezone_map.get(offset, 'UTC')
+    
+    def _generate_performance_timing(self) -> Dict[str, int]:
+        """Generate realistic performance timing"""
+        base_time = int(time.time() * 1000) - random.randint(1000, 10000)
+        
+        return {
+            'navigationStart': base_time,
+            'fetchStart': base_time + random.randint(0, 5),
+            'domainLookupStart': base_time + random.randint(5, 15),
+            'domainLookupEnd': base_time + random.randint(15, 25),
+            'connectStart': base_time + random.randint(25, 35),
+            'connectEnd': base_time + random.randint(35, 50),
+            'requestStart': base_time + random.randint(50, 60),
+            'responseStart': base_time + random.randint(60, 100),
+            'responseEnd': base_time + random.randint(100, 200),
+            'domLoading': base_time + random.randint(200, 300),
+            'domContentLoadedEventStart': base_time + random.randint(300, 500),
+            'domContentLoadedEventEnd': base_time + random.randint(500, 600),
+            'loadEventStart': base_time + random.randint(600, 800),
+            'loadEventEnd': base_time + random.randint(800, 1000)
+        }
+    
+    def _generate_audio_fingerprint(self) -> Dict[str, Any]:
+        """Generate audio context fingerprint"""
+        return {
+            'sampleRate': random.choice([44100, 48000]),
+            'maxChannelCount': random.choice([2, 6, 8]),
+            'numberOfInputs': random.choice([1, 2]),
+            'numberOfOutputs': random.choice([0, 1, 2]),
+            'channelCount': random.choice([1, 2]),
+            'channelCountMode': random.choice(['max', 'clamped-max', 'explicit']),
+            'channelInterpretation': random.choice(['speakers', 'discrete'])
+        }
+    
+    def _generate_media_devices(self) -> Dict[str, List[Dict[str, str]]]:
+        """Generate media devices info"""
+        devices = {
+            'audioinput': [],
+            'audiooutput': [],
+            'videoinput': []
+        }
+        
+        # Audio input devices
+        for i in range(random.randint(1, 3)):
+            devices['audioinput'].append({
+                'deviceId': self._generate_device_id(),
+                'kind': 'audioinput',
+                'label': f'Microphone {i+1}' if i > 0 else 'Default - Microphone',
+                'groupId': self._generate_group_id()
+            })
+        
+        # Audio output devices
+        for i in range(random.randint(1, 4)):
+            devices['audiooutput'].append({
+                'deviceId': self._generate_device_id(),
+                'kind': 'audiooutput', 
+                'label': f'Speaker {i+1}' if i > 0 else 'Default - Speaker',
+                'groupId': self._generate_group_id()
+            })
+        
+        # Video input devices
+        for i in range(random.randint(0, 2)):
+            devices['videoinput'].append({
+                'deviceId': self._generate_device_id(),
+                'kind': 'videoinput',
+                'label': f'Camera {i+1}',
+                'groupId': self._generate_group_id()
+            })
+        
+        return devices
+    
+    def _generate_device_id(self) -> str:
+        """Generate realistic device ID"""
+        chars = '0123456789abcdef'
+        return ''.join(random.choices(chars, k=64))
+    
+    def _generate_group_id(self) -> str:
+        """Generate realistic group ID"""
+        chars = '0123456789abcdef'
+        return ''.join(random.choices(chars, k=32))
+    
+    def _generate_battery_info(self) -> Optional[Dict[str, Any]]:
+        """Generate battery API info (if available)"""
+        if self.browser_type == 'firefox' or random.random() < 0.3:
+            return None  # Battery API not always available
+        
+        return {
+            'charging': random.choice([True, False]),
+            'chargingTime': random.randint(0, 7200) if random.random() < 0.5 else float('inf'),
+            'dischargingTime': random.randint(3600, 28800) if random.random() < 0.5 else float('inf'),
+            'level': round(random.uniform(0.1, 1.0), 2)
+        }
+
+
+class MLBasedFingerprintResistance:
+    """Machine learning-based fingerprint resistance"""
+    
+    def __init__(self):
+        self.detection_patterns = self._load_detection_patterns()
+        self.evasion_strategies = self._initialize_evasion_strategies()
+        self.learning_data = deque(maxlen=1000)
+        
+    def _load_detection_patterns(self) -> Dict[str, List[str]]:
+        """Load known detection patterns"""
+        return {
+            'canvas_detection': [
+                'canvas.toDataURL',
+                'getImageData',
+                'measureText',
+                'fillText',
+                'strokeText'
+            ],
+            'webgl_detection': [
+                'getParameter',
+                'getSupportedExtensions',
+                'getShaderPrecisionFormat',
+                'readPixels'
+            ],
+            'audio_detection': [
+                'createAnalyser',
+                'createOscillator',
+                'getFrequencyData',
+                'createBuffer'
+            ],
+            'timing_detection': [
+                'performance.now',
+                'Date.now',
+                'setTimeout',
+                'requestAnimationFrame'
+            ],
+            'font_detection': [
+                'measureText',
+                'fontFamily',
+                'textBaseline',
+                'textAlign'
+            ]
+        }
+    
+    def _initialize_evasion_strategies(self) -> Dict[str, List[callable]]:
+        """Initialize evasion strategies"""
+        return {
+            'canvas': [
+                self._randomize_canvas_output,
+                self._inject_canvas_noise,
+                self._modify_canvas_context
+            ],
+            'webgl': [
+                self._randomize_webgl_parameters,
+                self._spoof_webgl_extensions,
+                self._modify_webgl_precision
+            ],
+            'timing': [
+                self._add_timing_noise,
+                self._normalize_timing_precision,
+                self._randomize_timer_resolution
+            ],
+            'fonts': [
+                self._randomize_font_metrics,
+                self._spoof_font_availability,
+                self._modify_text_rendering
+            ]
+        }
+    
+    def analyze_detection_risk(self, fingerprint_data: Dict[str, Any]) -> float:
+        """Analyze detection risk based on fingerprint uniqueness"""
+        risk_score = 0.0
+        
+        # Check canvas uniqueness
+        if 'canvas' in fingerprint_data:
+            canvas_hash = fingerprint_data['canvas'].get('hash')
+            if self._is_unique_fingerprint(canvas_hash, 'canvas'):
+                risk_score += 0.3
+        
+        # Check WebGL uniqueness  
+        if 'webgl' in fingerprint_data:
+            webgl_hash = fingerprint_data['webgl'].get('hash')
+            if self._is_unique_fingerprint(webgl_hash, 'webgl'):
+                risk_score += 0.3
+        
+        # Check device combination uniqueness
+        device_combo = self._create_device_signature(fingerprint_data)
+        if self._is_unique_fingerprint(device_combo, 'device'):
+            risk_score += 0.2
+        
+        # Check timing patterns
+        if 'timing_patterns' in fingerprint_data:
+            if self._detect_timing_anomalies(fingerprint_data['timing_patterns']):
+                risk_score += 0.2
+        
+        return min(risk_score, 1.0)
+    
+    def apply_resistance_strategies(self, fingerprint_data: Dict[str, Any], risk_score: float) -> Dict[str, Any]:
+        """Apply resistance strategies based on risk assessment"""
+        if risk_score < 0.3:
+            return fingerprint_data  # Low risk, no changes needed
+        
+        modified_data = fingerprint_data.copy()
+        
+        # Apply canvas resistance
+        if 'canvas' in modified_data and risk_score > 0.4:
+            strategy = random.choice(self.evasion_strategies['canvas'])
+            modified_data['canvas'] = strategy(modified_data['canvas'])
+        
+        # Apply WebGL resistance
+        if 'webgl' in modified_data and risk_score > 0.4:
+            strategy = random.choice(self.evasion_strategies['webgl'])
+            modified_data['webgl'] = strategy(modified_data['webgl'])
+        
+        # Apply timing resistance
+        if risk_score > 0.6:
+            strategy = random.choice(self.evasion_strategies['timing'])
+            modified_data = strategy(modified_data)
+        
+        # Record learning data
+        self.learning_data.append({
+            'original_risk': risk_score,
+            'modifications_applied': True,
+            'timestamp': time.time()
+        })
+        
+        return modified_data
+    
+    def _is_unique_fingerprint(self, fingerprint: str, category: str) -> bool:
+        """Check if fingerprint is too unique (simplified ML approach)"""
+        # In a real implementation, this would use ML models
+        # For now, use heuristics
+        
+        if not fingerprint:
+            return False
+        
+        # Check against common fingerprints database (simplified)
+        common_patterns = {
+            'canvas': ['124c2f3e8b1a9d7c', '9a8b7c6d5e4f3a2b', '7f8e9d0c1b2a3456'],
+            'webgl': ['a1b2c3d4e5f6', 'f6e5d4c3b2a1', '123456789abc'],
+            'device': ['chrome_1920_1080_8', 'firefox_1366_768_4', 'safari_1440_900_8']
+        }
+        
+        if fingerprint in common_patterns.get(category, []):
+            return False  # Common fingerprint, not unique
+        
+        # Simple uniqueness check based on character patterns
+        unique_chars = len(set(fingerprint))
+        entropy = unique_chars / len(fingerprint) if fingerprint else 0
+        
+        return entropy > 0.7  # High entropy indicates uniqueness
+    
+    def _create_device_signature(self, data: Dict[str, Any]) -> str:
+        """Create device signature for uniqueness checking"""
+        signature_parts = []
+        
+        if 'navigator' in data:
+            nav = data['navigator']
+            signature_parts.append(str(nav.get('hardwareConcurrency', 'unknown')))
+            signature_parts.append(nav.get('platform', 'unknown'))
+        
+        if 'screen' in data:
+            screen = data['screen']
+            signature_parts.append(f"{screen.get('width', 0)}x{screen.get('height', 0)}")
+        
+        return '_'.join(signature_parts)
+    
+    def _detect_timing_anomalies(self, timing_data: Dict[str, Any]) -> bool:
+        """Detect timing-based anomalies"""
+        # Check for suspiciously perfect timing
+        if 'precision' in timing_data:
+            precision = timing_data['precision']
+            if precision <= 0.001:  # Too precise
+                return True
+        
+        # Check for unnatural patterns
+        if 'intervals' in timing_data:
+            intervals = timing_data['intervals']
+            if len(set(intervals)) == 1:  # All intervals identical
+                return True
+        
+        return False
+    
+    def _randomize_canvas_output(self, canvas_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add noise to canvas fingerprint"""
+        modified = canvas_data.copy()
+        
+        # Modify hash slightly
+        if 'hash' in modified:
+            original_hash = modified['hash']
+            # Flip a few bits
+            modified_hash = list(original_hash)
+            for _ in range(random.randint(1, 3)):
+                if modified_hash:
+                    idx = random.randint(0, len(modified_hash) - 1)
+                    modified_hash[idx] = random.choice('0123456789abcdef')
+            modified['hash'] = ''.join(modified_hash)
+        
+        # Add slight variations to metrics
+        if 'text_metrics' in modified:
+            metrics = modified['text_metrics']
+            for key in metrics:
+                if isinstance(metrics[key], (int, float)):
+                    noise = random.uniform(-0.1, 0.1)
+                    metrics[key] = max(0, metrics[key] + noise)
+        
+        return modified
+    
+    def _inject_canvas_noise(self, canvas_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Inject noise into canvas data"""
+        modified = canvas_data.copy()
+        
+        if 'data' in modified:
+            # Add random characters to simulate pixel noise
+            data = modified['data']
+            noise_chars = ''.join(random.choices('0123456789abcdef', k=5))
+            modified['data'] = data + noise_chars
+        
+        return modified
+    
+    def _modify_canvas_context(self, canvas_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Modify canvas context properties"""
+        modified = canvas_data.copy()
+        
+        # Slightly change dimensions
+        if 'width' in modified:
+            modified['width'] += random.randint(-2, 2)
+        if 'height' in modified:
+            modified['height'] += random.randint(-2, 2)
+        
+        return modified
+    
+    def _randomize_webgl_parameters(self, webgl_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Randomize WebGL parameters"""
+        modified = webgl_data.copy()
+        
+        if 'parameters' in modified:
+            params = modified['parameters']
+            # Slightly modify numeric parameters
+            for key, value in params.items():
+                if isinstance(value, int) and value > 100:
+                    params[key] = value + random.randint(-10, 10)
+        
+        return modified
+    
+    def _spoof_webgl_extensions(self, webgl_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Modify WebGL extensions list"""
+        modified = webgl_data.copy()
+        
+        if 'extensions' in modified:
+            extensions = modified['extensions'].copy()
+            # Randomly remove one extension
+            if extensions and random.random() < 0.3:
+                extensions.remove(random.choice(extensions))
+            modified['extensions'] = extensions
+        
+        return modified
+    
+    def _modify_webgl_precision(self, webgl_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Modify WebGL precision values"""
+        modified = webgl_data.copy()
+        
+        # Add slight imprecision to make it look more realistic
+        if 'hash' in modified:
+            original = modified['hash']
+            modified['hash'] = original[:-1] + random.choice('0123456789abcdef')
+        
+        return modified
+    
+    def _add_timing_noise(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add noise to timing data"""
+        modified = data.copy()
+        
+        if 'performance' in modified:
+            perf = modified['performance']
+            # Add small random delays
+            for key in perf:
+                if isinstance(perf[key], (int, float)):
+                    noise = random.randint(-5, 10)
+                    perf[key] = max(0, perf[key] + noise)
+        
+        return modified
+    
+    def _normalize_timing_precision(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize timing precision to avoid detection"""
+        modified = data.copy()
+        
+        # Round timing values to reduce precision
+        if 'performance' in modified:
+            perf = modified['performance']
+            for key in perf:
+                if isinstance(perf[key], (int, float)):
+                    # Round to nearest 5ms
+                    perf[key] = round(perf[key] / 5) * 5
+        
+        return modified
+    
+    def _randomize_timer_resolution(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Randomize timer resolution"""
+        # Add timer resolution info
+        if 'timing' not in data:
+            data['timing'] = {}
+        
+        data['timing']['resolution'] = random.choice([1, 5, 15, 20])  # ms
+        return data
+    
+    def _randomize_font_metrics(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Randomize font metrics"""
+        # This would modify font measurement data
+        return data
+    
+    def _spoof_font_availability(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Spoof font availability"""
+        # This would modify available fonts list
+        return data
+    
+    def _modify_text_rendering(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Modify text rendering characteristics"""
+        # This would modify text rendering metrics
+        return data
+
+
+class EnhancedDeviceFingerprinter:
+    """Enhanced device fingerprinting with additional capabilities"""
+    
+    def __init__(self, browser_type: str = 'chrome'):
+        self.browser_type = browser_type.lower()
+        
+        # Common screen resolutions
+        self.screen_resolutions = [
             (1920, 1080), (1366, 768), (1440, 900), (1536, 864),
             (1280, 720), (1600, 900), (2560, 1440), (3840, 2160)
         ]

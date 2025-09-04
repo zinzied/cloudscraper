@@ -38,8 +38,13 @@ from .metrics import MetricsCollector
 from .async_cloudscraper import AsyncCloudScraper, create_async_scraper
 from .performance import PerformanceMonitor, PerformanceProfiler
 from .challenge_response_system import ChallengeResponseSystem
-from .advanced_fingerprinting import AdvancedFingerprinter
-from .behavioral_simulation import InteractionSimulator
+from .tls_fingerprinting import TLSFingerprintingManager
+from .anti_detection import AntiDetectionManager
+from .enhanced_spoofing import SpoofingCoordinator
+from .intelligent_challenge_system import IntelligentChallengeSystem
+from .adaptive_timing import SmartTimingOrchestrator
+from .ml_optimization import MLBypassOrchestrator
+from .enhanced_error_handling import EnhancedErrorHandler
 
 # ------------------------------------------------------------------------------- #
 
@@ -79,13 +84,18 @@ class CipherSuiteAdapter(HTTPAdapter):
         if not self.ssl_context:
             self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
 
+        # Check if SSL context attribute exists before setting
+        if hasattr(self.ssl_context, 'wrap_socket'):
             self.ssl_context.orig_wrap_socket = self.ssl_context.wrap_socket
             self.ssl_context.wrap_socket = self.wrap_socket
 
             if self.server_hostname:
-                self.ssl_context.server_hostname = self.server_hostname
+                # Store server hostname in a custom attribute
+                self.ssl_context._custom_server_hostname = self.server_hostname
 
-            self.ssl_context.set_ciphers(self.cipherSuite)
+            # Only set ciphers if we have a valid cipher suite
+            if self.cipherSuite:
+                self.ssl_context.set_ciphers(self.cipherSuite)
             self.ssl_context.set_ecdh_curve(self.ecdhCurve)
 
             self.ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -96,13 +106,16 @@ class CipherSuiteAdapter(HTTPAdapter):
     # ------------------------------------------------------------------------------- #
 
     def wrap_socket(self, *args, **kwargs):
-        if hasattr(self.ssl_context, 'server_hostname') and self.ssl_context.server_hostname:
-            kwargs['server_hostname'] = self.ssl_context.server_hostname
+        if hasattr(self.ssl_context, '_custom_server_hostname') and self.ssl_context._custom_server_hostname:
+            kwargs['server_hostname'] = self.ssl_context._custom_server_hostname
             self.ssl_context.check_hostname = False
         else:
             self.ssl_context.check_hostname = True
 
-        return self.ssl_context.orig_wrap_socket(*args, **kwargs)
+        if hasattr(self.ssl_context, 'orig_wrap_socket'):
+            return self.ssl_context.orig_wrap_socket(*args, **kwargs)
+        else:
+            return self.ssl_context.wrap_socket(*args, **kwargs)
 
     # ------------------------------------------------------------------------------- #
 
@@ -203,6 +216,22 @@ class CloudScraper(Session):
             behavioral_patterns=stealth_options.get('behavioral_patterns', True)
         )
 
+        # Store enhanced feature parameters before cleaning kwargs
+        enable_metrics = kwargs.pop('enable_metrics', True)
+        metrics_history_size = kwargs.pop('metrics_history_size', 1000)
+        enable_performance_monitoring = kwargs.pop('enable_performance_monitoring', True)
+        enable_tls_fingerprinting = kwargs.pop('enable_tls_fingerprinting', True)
+        browser_type = kwargs.pop('browser', 'chrome')
+        enable_tls_rotation = kwargs.pop('enable_tls_rotation', True)
+        enable_anti_detection = kwargs.pop('enable_anti_detection', True)
+        enable_enhanced_spoofing = kwargs.pop('enable_enhanced_spoofing', True)
+        spoofing_consistency_level = kwargs.pop('spoofing_consistency_level', 'medium')
+        enable_intelligent_challenges = kwargs.pop('enable_intelligent_challenges', True)
+        enable_adaptive_timing = kwargs.pop('enable_adaptive_timing', True)
+        behavior_profile = kwargs.pop('behavior_profile', 'casual')
+        enable_ml_optimization = kwargs.pop('enable_ml_optimization', True)
+        enable_enhanced_error_handling = kwargs.pop('enable_enhanced_error_handling', True)
+
         # Clean up any remaining custom parameters that shouldn't go to Session
         custom_params = [
             'metrics_history_size', 'config_file', 'config_dict',
@@ -215,7 +244,12 @@ class CloudScraper(Session):
             'stealth_options', 'rotating_proxies', 'proxy_options', 'cipher_suite',
             'ecdh_curve', 'allow_brotli', 'browser', 'captcha', 'max_retries',
             'retry_backoff_factor', 'retry_on_status', 'connect_timeout',
-            'read_timeout', 'total_timeout', 'custom_headers'
+            'read_timeout', 'total_timeout', 'custom_headers',
+            # Enhanced feature parameters
+            'enable_tls_fingerprinting', 'enable_tls_rotation', 'enable_anti_detection',
+            'enable_enhanced_spoofing', 'spoofing_consistency_level', 'enable_intelligent_challenges',
+            'enable_adaptive_timing', 'behavior_profile', 'enable_ml_optimization',
+            'enable_enhanced_error_handling'
         ]
         for param in custom_params:
             kwargs.pop(param, None)
@@ -224,11 +258,20 @@ class CloudScraper(Session):
         super(CloudScraper, self).__init__(*args, **kwargs)
 
         # Set up User-Agent and headers
-        if 'requests' in self.headers.get('User-Agent', ''):
-            # Set a random User-Agent if no custom User-Agent has been set
-            self.headers = self.user_agent.headers
+        if 'requests' in str(self.headers.get('User-Agent', '')):
+            # Set User-Agent and headers safely
+            if hasattr(self.user_agent, 'headers') and self.user_agent.headers:
+                for key, value in self.user_agent.headers.items():
+                    self.headers[key] = value
             if not self.cipherSuite:
                 self.cipherSuite = self.user_agent.cipherSuite
+
+        # Ensure we have a valid cipher suite
+        if not self.cipherSuite:
+            # Provide a default cipher suite if none is available
+            self.cipherSuite = (
+                'ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS'
+            )
 
         if isinstance(self.cipherSuite, list):
             self.cipherSuite = ':'.join(self.cipherSuite)
@@ -252,31 +295,73 @@ class CloudScraper(Session):
         self.turnstile = CloudflareTurnstile(self)
 
         # Initialize metrics collection
-        self.enable_metrics = kwargs.pop('enable_metrics', True)
+        self.enable_metrics = enable_metrics
         if self.enable_metrics:
-            self.metrics = MetricsCollector(max_history_size=kwargs.pop('metrics_history_size', 1000))
+            self.metrics = MetricsCollector(max_history_size=metrics_history_size)
         else:
             self.metrics = None
 
         # Initialize performance monitoring
-        self.enable_performance_monitoring = kwargs.pop('enable_performance_monitoring', True)
+        self.enable_performance_monitoring = enable_performance_monitoring
         if self.enable_performance_monitoring:
             self.performance_monitor = PerformanceMonitor(self)
             self.performance_monitor.start_monitoring()
         else:
             self.performance_monitor = None
 
-        # Initialize advanced challenge handling
-        self.enable_advanced_challenges = kwargs.pop('enable_advanced_challenges', True)
-        if self.enable_advanced_challenges:
-            browser_type = 'chrome'  # Default browser type
-            self.challenge_system = ChallengeResponseSystem(self, browser_type)
-            self.advanced_fingerprinter = AdvancedFingerprinter(browser_type)
-            self.interaction_simulator = InteractionSimulator()
+        # Enhanced TLS fingerprinting
+        self.enable_tls_fingerprinting = enable_tls_fingerprinting
+        if self.enable_tls_fingerprinting:
+            self.tls_fingerprinting_manager = TLSFingerprintingManager(
+                browser_type=browser_type,
+                enable_rotation=enable_tls_rotation
+            )
         else:
-            self.challenge_system = None
-            self.advanced_fingerprinter = None
-            self.interaction_simulator = None
+            self.tls_fingerprinting_manager = None
+
+        # Anti-detection system
+        self.enable_anti_detection = enable_anti_detection
+        if self.enable_anti_detection:
+            self.anti_detection_manager = AntiDetectionManager()
+        else:
+            self.anti_detection_manager = None
+
+        # Enhanced fingerprint spoofing
+        self.enable_enhanced_spoofing = enable_enhanced_spoofing
+        if self.enable_enhanced_spoofing:
+            self.spoofing_coordinator = SpoofingCoordinator(spoofing_consistency_level)
+        else:
+            self.spoofing_coordinator = None
+
+        # Intelligent challenge system
+        self.enable_intelligent_challenges = enable_intelligent_challenges
+        if self.enable_intelligent_challenges:
+            self.intelligent_challenge_system = IntelligentChallengeSystem(self)
+        else:
+            self.intelligent_challenge_system = None
+
+        # Adaptive timing system
+        self.enable_adaptive_timing = enable_adaptive_timing
+        if self.enable_adaptive_timing:
+            self.timing_orchestrator = SmartTimingOrchestrator()
+            # Set behavior profile if specified
+            self.timing_orchestrator.set_behavior_profile(behavior_profile)
+        else:
+            self.timing_orchestrator = None
+
+        # Machine learning optimization
+        self.enable_ml_optimization = enable_ml_optimization
+        if self.enable_ml_optimization:
+            self.ml_optimizer = MLBypassOrchestrator(self)
+        else:
+            self.ml_optimizer = None
+
+        # Enhanced error handling
+        self.enable_enhanced_error_handling = enable_enhanced_error_handling
+        if self.enable_enhanced_error_handling:
+            self.enhanced_error_handler = EnhancedErrorHandler(self)
+        else:
+            self.enhanced_error_handler = None
 
         # Allow pickle serialization
         copyreg.pickle(ssl.SSLContext, lambda obj: (obj.__class__, (obj.protocol,)))
@@ -320,16 +405,21 @@ class CloudScraper(Session):
     # ------------------------------------------------------------------------------- #
 
     def decodeBrotli(self, resp):
-        if requests.packages.urllib3.__version__ < '1.25.1' and resp.headers.get('Content-Encoding') == 'br':
-            if self.allow_brotli and resp._content:
-                resp._content = brotli.decompress(resp.content)
-            else:
-                logging.warning(
-                    f'You\'re running urllib3 {requests.packages.urllib3.__version__}, Brotli content detected, '
-                    'Which requires manual decompression, '
-                    'But option allow_brotli is set to False, '
-                    'We will not continue to decompress.'
-                )
+        try:
+            import requests.packages.urllib3 as urllib3_mod
+            if urllib3_mod.__version__ < '1.25.1' and resp.headers.get('Content-Encoding') == 'br':
+                if self.allow_brotli and resp._content:
+                    resp._content = brotli.decompress(resp.content)
+                else:
+                    logging.warning(
+                        f'You\'re running urllib3 {urllib3_mod.__version__}, Brotli content detected, '
+                        'Which requires manual decompression, '
+                        'But option allow_brotli is set to False, '
+                        'We will not continue to decompress.'
+                    )
+        except (ImportError, AttributeError):
+            # Handle case where urllib3 structure is different
+            pass
 
         return resp
 
@@ -338,12 +428,62 @@ class CloudScraper(Session):
     # ------------------------------------------------------------------------------- #
 
     def request(self, method, url, *args, **kwargs):
+        # Start timing for adaptive algorithms
+        request_start_time = time.time()
+        
         # Apply request throttling to prevent TLS blocking
         self._apply_request_throttling()
 
         # Rotate TLS cipher suites to avoid detection
-        if self.rotate_tls_ciphers:
+        if self.rotate_tls_ciphers and self.tls_fingerprinting_manager:
+            ssl_context = self.tls_fingerprinting_manager.get_ssl_context()
+            # Update the HTTPS adapter with new SSL context
+            self.mount('https://', CipherSuiteAdapter(
+                ssl_context=ssl_context,
+                source_address=self.source_address
+            ))
+        elif self.rotate_tls_ciphers:
             self._rotate_tls_cipher_suite()
+
+        # Apply anti-detection preprocessing
+        if self.anti_detection_manager:
+            should_delay, delay_time, kwargs = self.anti_detection_manager.pre_request_processing(
+                method, url, **kwargs
+            )
+            if should_delay and delay_time > 0:
+                if self.debug:
+                    print(f'⏱️  Anti-detection delay: {delay_time:.2f}s')
+                time.sleep(delay_time)
+
+        # Apply adaptive timing if enabled
+        if self.timing_orchestrator:
+            content_length = self._estimate_content_length(kwargs)
+            optimal_delay = self.timing_orchestrator.calculate_optimal_delay(
+                urlparse(url).netloc, method, content_length
+            )
+            if optimal_delay > 0.1:  # Only apply significant delays
+                if self.debug:
+                    print(f'⏱️  Adaptive timing delay: {optimal_delay:.2f}s')
+                self.timing_orchestrator.execute_delay(optimal_delay, urlparse(url).netloc)
+
+        # Enhanced fingerprint spoofing
+        if self.spoofing_coordinator:
+            fingerprints = self.spoofing_coordinator.generate_coordinated_fingerprints(
+                urlparse(url).netloc
+            )
+            # Add fingerprint data to headers if needed
+            if 'headers' not in kwargs:
+                kwargs['headers'] = {}
+            
+            # Add canvas fingerprint headers
+            canvas_fp = fingerprints.get('canvas', {})
+            if canvas_fp:
+                kwargs['headers']['X-Canvas-Fingerprint'] = canvas_fp.get('hash', '')
+            
+            # Add WebGL fingerprint headers  
+            webgl_fp = fingerprints.get('webgl', {})
+            if webgl_fp:
+                kwargs['headers']['X-WebGL-Fingerprint'] = webgl_fp.get('hash', '')
 
         # Check if session needs refresh due to age
         if self._should_refresh_session():
@@ -352,19 +492,23 @@ class CloudScraper(Session):
         # Handle proxy rotation if no specific proxies are provided
         if not kwargs.get('proxies') and hasattr(self, 'proxy_manager') and self.proxy_manager.proxies:
             kwargs['proxies'] = self.proxy_manager.get_proxy()
-        elif kwargs.get('proxies') and kwargs.get('proxies') != self.proxies:
-            self.proxies = kwargs.get('proxies')
+        elif kwargs.get('proxies') and kwargs.get('proxies') != getattr(self, 'proxies', None):
+            if hasattr(self, 'proxies'):
+                self.proxies = kwargs.get('proxies')
 
         # Apply stealth techniques if enabled
         if self.enable_stealth:
             kwargs = self.stealth_mode.apply_stealth_techniques(method, url, **kwargs)
 
         # Add advanced fingerprinting headers if enabled
-        if self.advanced_fingerprinter:
-            fp_headers = self.advanced_fingerprinter.get_fingerprint_headers()
-            if 'headers' not in kwargs:
-                kwargs['headers'] = {}
-            kwargs['headers'].update(fp_headers)
+        if hasattr(self, 'advanced_fingerprinter') and self.advanced_fingerprinter:
+            try:
+                fp_headers = self.advanced_fingerprinter.get_fingerprint_headers()
+                if 'headers' not in kwargs:
+                    kwargs['headers'] = {}
+                kwargs['headers'].update(fp_headers)
+            except AttributeError:
+                pass  # Method doesn't exist
 
         # Track request count
         self.request_count += 1
@@ -446,11 +590,70 @@ class CloudScraper(Session):
                     self.debugRequest(response)
 
         # ------------------------------------------------------------------------------- #
-        # Handle Cloudflare challenges
+        # Handle Cloudflare challenges with intelligent detection
         # ------------------------------------------------------------------------------- #
 
-        # Try advanced challenge handling first (if enabled)
-        if self.challenge_system and self._is_challenge_response(response):
+        # Calculate response time for adaptive learning
+        response_time = time.time() - request_start_time
+        domain = urlparse(url).netloc
+        
+        # Apply ML optimization before request
+        if self.ml_optimizer:
+            optimization_result = self.ml_optimizer.optimize_for_request(domain, {
+                'method': method,
+                'url': url
+            })
+            if self.debug and optimization_result.get('optimized'):
+                print(f"🤖 ML optimization: {optimization_result['strategy']} (confidence: {optimization_result['confidence']:.2f})")
+        
+        # Try intelligent challenge system first (if enabled)
+        if self.intelligent_challenge_system:
+            challenge_detected, challenge_response = self.intelligent_challenge_system.process_response(
+                response, **kwargs
+            )
+            
+            if challenge_detected:
+                if self.debug:
+                    print('🧠 Intelligent challenge system detected and handled challenge')
+                
+                # CRITICAL FIX: Decrement concurrent request counter before challenge handling
+                if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                    self.current_concurrent_requests -= 1
+                    if self.debug:
+                        print(f'🔢 Concurrent requests decremented (intelligent challenge): {self.current_concurrent_requests}')
+                
+                if challenge_response and challenge_response.get('retry'):
+                    # Retry with modified parameters
+                    modified_kwargs = challenge_response.get('modified_kwargs', kwargs)
+                    return self.request(method, url, *args, **modified_kwargs)
+                elif challenge_response:
+                    return challenge_response
+        
+        # Record request outcome for adaptive systems
+        success = response.status_code == 200
+        
+        # Update anti-detection system
+        if self.anti_detection_manager:
+            self.anti_detection_manager.post_request_processing(method, url, response, response_time)
+        
+        # Update adaptive timing system
+        if self.timing_orchestrator:
+            delay_used = response_time  # Approximate delay from timing
+            self.timing_orchestrator.record_request_outcome(domain, success, response_time, delay_used)
+        
+        # Update ML optimization system
+        if self.ml_optimizer:
+            challenge_type = 'none'
+            if hasattr(response, 'headers') and 'cloudflare' in response.headers.get('Server', '').lower():
+                if response.status_code in [403, 429, 503]:
+                    challenge_type = 'cloudflare_challenge'
+            
+            self.ml_optimizer.record_request_outcome(
+                domain, success, response_time, response.status_code, challenge_type
+            )
+
+        # Try advanced challenge handling (legacy system)
+        if hasattr(self, 'challenge_system') and self.challenge_system and self._is_challenge_response(response):
             if self.debug:
                 print('🛡️ Cloudflare challenge detected, using advanced bypass system...')
 
@@ -461,14 +664,15 @@ class CloudScraper(Session):
                     print(f'🔢 Concurrent requests decremented (advanced challenge): {self.current_concurrent_requests}')
 
             try:
-                challenge_response = self.challenge_system.handle_challenge_response(response)
-                if challenge_response and challenge_response.status_code == 200:
-                    if self.debug:
-                        print('✅ Advanced challenge bypass successful!')
-                    return challenge_response
-                else:
-                    if self.debug:
-                        print('⚠️ Advanced challenge bypass failed, falling back to standard methods...')
+                if hasattr(self.challenge_system, 'handle_challenge_response'):
+                    challenge_response = self.challenge_system.handle_challenge_response(response)
+                    if challenge_response and challenge_response.status_code == 200:
+                        if self.debug:
+                            print('✅ Advanced challenge bypass successful!')
+                        return challenge_response
+                    else:
+                        if self.debug:
+                            print('⚠️ Advanced challenge bypass failed, falling back to standard methods...')
             except Exception as e:
                 if self.debug:
                     print(f'❌ Advanced challenge bypass error: {e}, falling back to standard methods...')
@@ -646,7 +850,10 @@ class CloudScraper(Session):
             # Generate new user agent to avoid fingerprint detection
             if hasattr(self, 'user_agent'):
                 self.user_agent.loadUserAgent()
-                self.headers.update(self.user_agent.headers)
+                # Update headers safely
+                if hasattr(self.user_agent, 'headers') and self.user_agent.headers:
+                    for key, value in self.user_agent.headers.items():
+                        self.headers[key] = value
 
             # Make a simple request to re-establish session
             try:
@@ -970,8 +1177,9 @@ class CloudScraper(Session):
                     cookie_domain = d
                     break
             else:
-                cls.simpleException(
-                    cls,
+                # Create a temporary scraper instance to call simpleException
+                temp_scraper = cls()
+                temp_scraper.simpleException(
                     CloudflareIUAMError,
                     "Unable to find Cloudflare cookies. Does the site actually "
                     "have Cloudflare IUAM (I'm Under Attack Mode) enabled?"
@@ -988,6 +1196,141 @@ class CloudScraper(Session):
             cf_cookies,
             scraper.headers['User-Agent']
         )
+
+    # ------------------------------------------------------------------------------- #
+    # Enhanced methods for new functionality
+    # ------------------------------------------------------------------------------- #
+
+    def _estimate_content_length(self, kwargs):
+        """Estimate content length for adaptive timing"""
+        content_length = 1000  # Default
+        
+        if 'data' in kwargs:
+            data = kwargs['data']
+            if isinstance(data, str):
+                content_length = len(data.encode('utf-8'))
+            elif isinstance(data, bytes):
+                content_length = len(data)
+            elif hasattr(data, '__len__'):
+                content_length = len(str(data))
+        
+        elif 'json' in kwargs:
+            import json
+            json_str = json.dumps(kwargs['json'])
+            content_length = len(json_str.encode('utf-8'))
+        
+        return content_length
+    
+    def get_enhanced_statistics(self):
+        """Get comprehensive statistics from all enhanced systems"""
+        stats = {
+            'basic': {
+                'total_requests': self.request_count,
+                'session_age': time.time() - self.session_start_time,
+                'concurrent_requests': self.current_concurrent_requests
+            }
+        }
+        
+        # TLS fingerprinting stats
+        if self.tls_fingerprinting_manager:
+            stats['tls_fingerprinting'] = self.tls_fingerprinting_manager.get_fingerprint_info()
+        
+        # Anti-detection stats
+        if self.anti_detection_manager:
+            stats['anti_detection'] = self.anti_detection_manager.get_statistics()
+        
+        # Spoofing stats
+        if self.spoofing_coordinator:
+            stats['spoofing'] = self.spoofing_coordinator.get_spoofing_statistics()
+        
+        # Intelligent challenge stats
+        if self.intelligent_challenge_system:
+            stats['intelligent_challenges'] = self.intelligent_challenge_system.get_statistics()
+        
+        # Adaptive timing stats
+        if self.timing_orchestrator:
+            stats['adaptive_timing'] = self.timing_orchestrator.get_timing_statistics()
+        
+        # ML optimization stats
+        if self.ml_optimizer:
+            try:
+                stats['ml_optimization'] = self.ml_optimizer.get_optimization_report()
+            except AttributeError:
+                # Fallback to basic stats if method doesn't exist
+                stats['ml_optimization'] = {
+                    'enabled': getattr(self.ml_optimizer, 'enabled', True),
+                    'total_attempts': len(getattr(self.ml_optimizer, 'optimizer', {}).get('attempt_history', [])) if hasattr(self.ml_optimizer, 'optimizer') else 0
+                }
+        
+        # Enhanced error handling stats
+        if self.enhanced_error_handler:
+            stats['error_handling'] = self.enhanced_error_handler.get_error_statistics()
+        
+        # Stealth mode stats
+        if hasattr(self, 'stealth_mode') and self.stealth_mode:
+            stats['stealth'] = {
+                'request_count': self.stealth_mode.request_count,
+                'last_request_time': self.stealth_mode.last_request_time,
+                'session_depth': len(self.stealth_mode.visit_times)
+            }
+        
+        return stats
+    
+    def optimize_for_domain(self, domain):
+        """Optimize all systems for a specific domain"""
+        if self.timing_orchestrator:
+            self.timing_orchestrator.optimize_domain_timing(domain)
+        
+        if self.spoofing_coordinator:
+            # Generate fresh fingerprints for domain
+            self.spoofing_coordinator.clear_domain_cache(domain)
+        
+        if self.debug:
+            print(f'✨ Optimized all systems for domain: {domain}')
+    
+    def enable_maximum_stealth(self):
+        """Enable maximum stealth mode for challenging websites"""
+        # Enable all stealth systems
+        if self.tls_fingerprinting_manager:
+            self.tls_fingerprinting_manager.force_rotation()
+        
+        if self.anti_detection_manager:
+            self.anti_detection_manager.enable()
+        
+        if self.spoofing_coordinator:
+            self.spoofing_coordinator.clear_domain_cache()
+        
+        if hasattr(self, 'stealth_mode') and self.stealth_mode:
+            # Switch to research profile for slower, more careful browsing
+            if self.timing_orchestrator:
+                self.timing_orchestrator.set_behavior_profile('research')
+        
+        if self.debug:
+            print('🥷 Maximum stealth mode enabled')
+    
+    def reset_all_systems(self):
+        """Reset all enhanced systems to initial state"""
+        if self.tls_fingerprinting_manager:
+            self.tls_fingerprinting_manager.force_rotation()
+        
+        if self.anti_detection_manager:
+            self.anti_detection_manager.reset_patterns()
+        
+        if self.spoofing_coordinator:
+            self.spoofing_coordinator.clear_domain_cache()
+        
+        if self.intelligent_challenge_system:
+            self.intelligent_challenge_system.clear_cache()
+        
+        if self.timing_orchestrator:
+            self.timing_orchestrator.reset_domain_data()
+        
+        # Reset session variables
+        self._403_retry_count = 0
+        self._solveDepthCnt = 0
+        
+        if self.debug:
+            print('🔄 All enhanced systems reset to initial state')
 
     # ------------------------------------------------------------------------------- #
 
