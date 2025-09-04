@@ -17,7 +17,7 @@ setup(
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     py_modules = [],
     python_requires='>=3.8',
-    description = 'Enhanced Python module to bypass Cloudflare\'s anti-bot page with support for v2 challenges, proxy rotation, and stealth mode.',
+    description = 'Enhanced Python library to bypass Cloudflare\'s anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation.',
     long_description=readme,
     long_description_content_type='text/markdown',
     url = 'https://github.com/zinzied/cloudscraper',
@@ -31,7 +31,17 @@ setup(
         'waf',
         'iuam',
         'bypass',
-        'challenge'
+        'challenge',
+        'tls-fingerprinting',
+        'anti-detection',
+        'stealth',
+        'machine-learning',
+        'behavioral-simulation',
+        'canvas-spoofing',
+        'webgl-spoofing',
+        'fingerprint-resistance',
+        'automation',
+        'turnstile'
     ],
     include_package_data = True,
     install_requires = [
@@ -60,6 +70,10 @@ setup(
         'Programming Language :: Python :: 3.13',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
-        'Topic :: Software Development :: Libraries :: Python Modules'
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Security',
+        'Topic :: System :: Networking',
+        'Environment :: Web Environment',
+        'Framework :: AsyncIO'
     ]
 ) 

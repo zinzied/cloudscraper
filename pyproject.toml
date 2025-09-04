@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudscraper"
-version = "3.1.0"
-description = "Enhanced Python module to bypass Cloudflare's anti-bot page with support for v2 challenges, proxy rotation, and stealth mode."
+version = "3.1.1"
+description = "Enhanced Python library to bypass Cloudflare's anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -25,7 +25,17 @@ keywords = [
     "waf",
     "iuam",
     "bypass",
-    "challenge"
+    "challenge",
+    "tls-fingerprinting",
+    "anti-detection",
+    "stealth",
+    "machine-learning",
+    "behavioral-simulation",
+    "canvas-spoofing",
+    "webgl-spoofing",
+    "fingerprint-resistance",
+    "automation",
+    "turnstile"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -43,7 +53,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+    "Topic :: System :: Networking",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO"
 ]
 requires-python = ">=3.8"
 dependencies = [

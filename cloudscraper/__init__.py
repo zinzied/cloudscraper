@@ -35,7 +35,13 @@ from .user_agent import User_Agent
 from .proxy_manager import ProxyManager
 from .stealth import StealthMode
 from .metrics import MetricsCollector
-from .async_cloudscraper import AsyncCloudScraper, create_async_scraper
+# Optional async support - don't break if aiohttp is not available
+try:
+    from .async_cloudscraper import AsyncCloudScraper, create_async_scraper
+except ImportError:
+    # Async support not available - aiohttp not installed
+    AsyncCloudScraper = None
+    create_async_scraper = None
 from .performance import PerformanceMonitor, PerformanceProfiler
 from .challenge_response_system import ChallengeResponseSystem
 from .tls_fingerprinting import TLSFingerprintingManager
@@ -48,7 +54,7 @@ from .enhanced_error_handling import EnhancedErrorHandler
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.1.0'
+__version__ = '3.1.1'
 
 # ------------------------------------------------------------------------------- #
 
