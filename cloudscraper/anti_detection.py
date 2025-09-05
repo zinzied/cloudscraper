@@ -57,8 +57,8 @@ class TrafficPatternObfuscator:
         if domain not in self.timing_patterns:
             self.timing_patterns[domain] = {
                 'last_request': 0,
-                'avg_interval': random.uniform(2.0, 8.0),
-                'variance': random.uniform(0.5, 2.0)
+                'avg_interval': random.uniform(1.0, 3.0),  # Reduced from 2.0-8.0
+                'variance': random.uniform(0.3, 1.0)      # Reduced from 0.5-2.0
             }
         
         pattern = self.timing_patterns[domain]
@@ -107,7 +107,7 @@ class BurstController:
         self.adaptive_limits = defaultdict(lambda: {
             'max_burst': 5,
             'window_size': 60,  # seconds
-            'cooldown_base': 30  # seconds
+            'cooldown_base': 10  # reduced from 30 seconds
         })
     
     def is_burst_limit_reached(self, domain: str) -> bool:
@@ -137,8 +137,9 @@ class BurstController:
         limits = self.adaptive_limits[domain]
         base_cooldown = limits['cooldown_base']
         
-        # Add randomization
-        cooldown = base_cooldown + random.uniform(-5, 10)
+        # Add randomization but keep it reasonable
+        cooldown = base_cooldown + random.uniform(-2, 5)  # reduced from -5, 10
+        cooldown = max(1.0, cooldown)  # minimum 1 second
         
         # Set cooldown period
         self.cooldown_periods[domain] = time.time() + cooldown
@@ -153,12 +154,12 @@ class BurstController:
         if status_code == 429:  # Rate limited
             limits = self.adaptive_limits[domain]
             limits['max_burst'] = max(1, limits['max_burst'] - 1)
-            limits['cooldown_base'] = min(120, limits['cooldown_base'] * 1.5)
+            limits['cooldown_base'] = min(60, limits['cooldown_base'] * 1.3)  # reduced max from 120
         elif status_code == 200:  # Success
             limits = self.adaptive_limits[domain]
             if random.random() < 0.1:  # Occasionally increase limits
                 limits['max_burst'] = min(10, limits['max_burst'] + 1)
-                limits['cooldown_base'] = max(10, limits['cooldown_base'] * 0.9)
+                limits['cooldown_base'] = max(5, limits['cooldown_base'] * 0.9)  # reduced min from 10
 
 
 class SessionDistributor:
@@ -180,8 +181,8 @@ class SessionDistributor:
         time_since_last = current_time - session['last_activity']
         
         # If session has been idle, simulate user returning
-        if time_since_last > 300:  # 5 minutes
-            return random.uniform(1.0, 5.0)
+        if time_since_last > 60:  # reduced from 300 (5 minutes) to 1 minute
+            return random.uniform(0.5, 2.0)  # reduced from 1.0-5.0
         
         # Normal session timing
         return max(0, session['min_interval'] - time_since_last)
@@ -192,7 +193,7 @@ class SessionDistributor:
             'id': str(uuid.uuid4()),
             'created': time.time(),
             'last_activity': 0,
-            'min_interval': random.uniform(1.0, 3.0),
+            'min_interval': random.uniform(0.5, 1.5),  # reduced from 1.0-3.0
             'request_count': 0
         }
     

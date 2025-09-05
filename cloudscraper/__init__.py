@@ -629,6 +629,12 @@ class CloudScraper(Session):
                         print(f'🔢 Concurrent requests decremented (intelligent challenge): {self.current_concurrent_requests}')
                 
                 if challenge_response and challenge_response.get('retry'):
+                    # Prevent infinite recursion by incrementing solve depth
+                    self._solveDepthCnt += 1
+                    if self._solveDepthCnt >= self.solveDepth:
+                        if self.debug:
+                            print('⚠️ Maximum solve depth reached, returning original response')
+                        return response
                     # Retry with modified parameters
                     modified_kwargs = challenge_response.get('modified_kwargs', kwargs)
                     return self.request(method, url, *args, **modified_kwargs)
@@ -683,9 +689,14 @@ class CloudScraper(Session):
                 if self.debug:
                     print(f'❌ Advanced challenge bypass error: {e}, falling back to standard methods...')
 
-        # Check for loop protection
+        # Check for loop protection with enhanced tracking
         if self._solveDepthCnt >= self.solveDepth:
             _ = self._solveDepthCnt
+            # Reset concurrent counter on loop protection
+            if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                self.current_concurrent_requests -= 1
+                if self.debug:
+                    print(f'🔢 Concurrent requests decremented (loop protection): {self.current_concurrent_requests}')
             self.simpleException(
                 CloudflareLoopProtection,
                 f"!!Loop Protection!! We have tried to solve {_} time(s) in a row."

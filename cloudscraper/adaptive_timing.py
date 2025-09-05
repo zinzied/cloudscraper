@@ -34,24 +34,24 @@ class HumanBehaviorSimulator:
     def __init__(self):
         self.behavior_profiles = {
             'casual': TimingProfile(
-                base_delay=3.0, min_delay=1.0, max_delay=8.0,
-                variance_factor=0.8, burst_threshold=3,
-                cooldown_multiplier=2.0, success_rate_threshold=0.8
+                base_delay=1.5, min_delay=0.5, max_delay=3.0,
+                variance_factor=0.4, burst_threshold=3,
+                cooldown_multiplier=1.5, success_rate_threshold=0.8
             ),
             'focused': TimingProfile(
-                base_delay=1.5, min_delay=0.5, max_delay=4.0,
-                variance_factor=0.4, burst_threshold=5,
-                cooldown_multiplier=1.5, success_rate_threshold=0.85
+                base_delay=0.8, min_delay=0.3, max_delay=2.0,
+                variance_factor=0.3, burst_threshold=5,
+                cooldown_multiplier=1.2, success_rate_threshold=0.85
             ),
             'research': TimingProfile(
-                base_delay=5.0, min_delay=2.0, max_delay=15.0,
-                variance_factor=1.2, burst_threshold=2,
-                cooldown_multiplier=3.0, success_rate_threshold=0.7
+                base_delay=2.5, min_delay=1.0, max_delay=6.0,
+                variance_factor=0.6, burst_threshold=2,
+                cooldown_multiplier=2.0, success_rate_threshold=0.7
             ),
             'mobile': TimingProfile(
-                base_delay=2.0, min_delay=1.0, max_delay=6.0,
-                variance_factor=0.6, burst_threshold=4,
-                cooldown_multiplier=1.8, success_rate_threshold=0.75
+                base_delay=1.2, min_delay=0.5, max_delay=3.0,
+                variance_factor=0.4, burst_threshold=4,
+                cooldown_multiplier=1.3, success_rate_threshold=0.75
             )
         }
         
@@ -187,14 +187,14 @@ class AdaptiveTimingController:
         success_rate = domain_profile['success_rate']
         consecutive_failures = domain_profile['consecutive_failures']
         
-        # Increase delay if success rate is low
+        # Increase delay if success rate is low, but more conservatively
         if success_rate < self.success_threshold:
-            failure_multiplier = 1.0 + (self.success_threshold - success_rate) * 2
+            failure_multiplier = 1.0 + (self.success_threshold - success_rate) * 1.0  # Reduced from 2.0 to 1.0
             base_delay *= failure_multiplier
         
-        # Additional penalty for consecutive failures
+        # Additional penalty for consecutive failures, but cap it
         if consecutive_failures > 0:
-            penalty = min(3.0, 1.0 + (consecutive_failures * 0.3))
+            penalty = min(2.0, 1.0 + (consecutive_failures * 0.2))  # Reduced from 3.0 and 0.3 to 2.0 and 0.2
             base_delay *= penalty
         
         # Reduce delay if we're consistently successful
@@ -228,15 +228,18 @@ class AdaptiveTimingController:
                                    profile: Dict[str, Any]) -> float:
         """Apply domain-specific timing optimizations"""
         
-        # Use optimal timing if we've learned it
+        # Use optimal timing if we've learned it, but limit the influence
         if profile['optimal_timing']:
             optimal = profile['optimal_timing']
-            # Blend current calculation with learned optimal timing
-            delay = (delay * 0.7) + (optimal * 0.3)
+            # Blend current calculation with learned optimal timing (reduced influence)
+            delay = (delay * 0.8) + (optimal * 0.2)  # Reduced from 0.7/0.3 to 0.8/0.2
         
-        # Adjust based on domain's average response time
-        response_time_factor = min(2.0, profile['avg_response_time'])
+        # Adjust based on domain's average response time, but cap the factor
+        response_time_factor = min(1.5, profile['avg_response_time'])  # Reduced from 2.0 to 1.5
         delay *= response_time_factor
+        
+        # Apply final cap to prevent runaway delays
+        delay = min(10.0, delay)  # Hard cap at 10 seconds
         
         return delay
     
@@ -253,17 +256,18 @@ class AdaptiveTimingController:
             profile['consecutive_failures'] = 0
             profile['last_success'] = time.time()
             
-            # Learn optimal timing from successful requests
-            if not profile['optimal_timing']:
-                profile['optimal_timing'] = delay_used
-            else:
-                # Exponential moving average
-                alpha = 0.1
-                profile['optimal_timing'] = (
-                    alpha * delay_used + (1 - alpha) * profile['optimal_timing']
-                )
+            # Learn optimal timing from successful requests, but cap it reasonably
+            # Don't learn from extremely long delays (they may be due to external factors)
+            if delay_used <= 10.0:  # Only learn from reasonable delays
+                if not profile['optimal_timing']:
+                    profile['optimal_timing'] = min(5.0, delay_used)  # Cap at 5 seconds
+                else:
+                    # Exponential moving average with capping
+                    alpha = 0.1
+                    new_optimal = alpha * delay_used + (1 - alpha) * profile['optimal_timing']
+                    profile['optimal_timing'] = min(5.0, new_optimal)  # Cap at 5 seconds
         else:
-            profile['consecutive_failures'] += 1
+            profile['consecutive_failures'] = min(3, profile['consecutive_failures'] + 1)  # Cap failures at 3
         
         # Update success rate (exponential moving average)
         alpha = 0.05
@@ -271,9 +275,10 @@ class AdaptiveTimingController:
             alpha * (1.0 if success else 0.0) + (1 - alpha) * profile['success_rate']
         )
         
-        # Update average response time
+        # Update average response time - but cap it to avoid learning from timeouts
+        capped_response_time = min(30.0, response_time)  # Cap at 30 seconds
         profile['avg_response_time'] = (
-            alpha * response_time + (1 - alpha) * profile['avg_response_time']
+            alpha * capped_response_time + (1 - alpha) * profile['avg_response_time']
         )
         
         # Record timing data
