@@ -59,6 +59,7 @@ __version__ = '3.1.1'
 # ------------------------------------------------------------------------------- #
 
 
+
 class CipherSuiteAdapter(HTTPAdapter):
 
     __attrs__ = [
@@ -88,40 +89,40 @@ class CipherSuiteAdapter(HTTPAdapter):
                 )
 
         if not self.ssl_context:
-            self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            self.ssl_context = ssl.create_default_context(
+                ssl.Purpose.SERVER_AUTH)
 
-        # Check if SSL context attribute exists before setting
-        if hasattr(self.ssl_context, 'wrap_socket'):
-            self.ssl_context.orig_wrap_socket = self.ssl_context.wrap_socket
-            self.ssl_context.wrap_socket = self.wrap_socket
+        # Store custom server hostname if provided
+        if self.server_hostname:
+            self.ssl_context._custom_server_hostname = self.server_hostname
 
-            if self.server_hostname:
-                # Store server hostname in a custom attribute
-                self.ssl_context._custom_server_hostname = self.server_hostname
+        # Only set ciphers if we have a valid cipher suite
+        if self.cipherSuite:
+            self.ssl_context.set_ciphers(self.cipherSuite)
 
-            # Only set ciphers if we have a valid cipher suite
-            if self.cipherSuite:
-                self.ssl_context.set_ciphers(self.cipherSuite)
-            self.ssl_context.set_ecdh_curve(self.ecdhCurve)
+        self.ssl_context.set_ecdh_curve(self.ecdhCurve)
+        self.ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+        self.ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
 
-            self.ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
-            self.ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
+        # Monkey-patch wrap_socket only if not already patched
+        if hasattr(self.ssl_context, 'wrap_socket') and not hasattr(self.ssl_context, '_is_patched'):
+            orig_wrap_socket = self.ssl_context.wrap_socket
+
+            def patched_wrap_socket(sock, *args, **kwargs):
+                # If custom server hostname is set, use it
+                if hasattr(self.ssl_context, '_custom_server_hostname') and self.ssl_context._custom_server_hostname:
+                    kwargs['server_hostname'] = self.ssl_context._custom_server_hostname
+                    self.ssl_context.check_hostname = False
+                else:
+                    self.ssl_context.check_hostname = True
+
+                # Call the original wrap_socket
+                return orig_wrap_socket(sock, *args, **kwargs)
+
+            self.ssl_context.wrap_socket = patched_wrap_socket
+            self.ssl_context._is_patched = True
 
         super(CipherSuiteAdapter, self).__init__(**kwargs)
-
-    # ------------------------------------------------------------------------------- #
-
-    def wrap_socket(self, *args, **kwargs):
-        if hasattr(self.ssl_context, '_custom_server_hostname') and self.ssl_context._custom_server_hostname:
-            kwargs['server_hostname'] = self.ssl_context._custom_server_hostname
-            self.ssl_context.check_hostname = False
-        else:
-            self.ssl_context.check_hostname = True
-
-        if hasattr(self.ssl_context, 'orig_wrap_socket'):
-            return self.ssl_context.orig_wrap_socket(*args, **kwargs)
-        else:
-            return self.ssl_context.wrap_socket(*args, **kwargs)
 
     # ------------------------------------------------------------------------------- #
 
@@ -136,7 +137,6 @@ class CipherSuiteAdapter(HTTPAdapter):
         kwargs['ssl_context'] = self.ssl_context
         kwargs['source_address'] = self.source_address
         return super(CipherSuiteAdapter, self).proxy_manager_for(*args, **kwargs)
-
 # ------------------------------------------------------------------------------- #
 
 
