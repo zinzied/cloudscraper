@@ -16,9 +16,9 @@
 
 ---
 
-## 🔍 **Looking for Advanced Browser Automation?**
+## 🔍 **[Looking for Advanced Browser Automation?](https://www.scrapeless.com/en)**
 
-If you are looking for a solution focused on browser automation and anti-detection mechanisms, I recommend **Scrapeless Browser**.
+If you are looking for a solution focused on browser automation and anti-detection mechanisms, I recommend **[Scrapeless Browser](https://www.scrapeless.com/en)**.
 
 It is a cloud-based, Chromium-powered headless browser cluster that enables developers to run large-scale concurrent browser instances and handle complex interactions on protected pages. Perfect for AI infrastructure, web automation, data scraping, page rendering, and automated testing.
 
