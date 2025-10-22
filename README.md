@@ -22,7 +22,7 @@ If you are looking for a solution focused on browser automation and anti-detecti
 
 It is a cloud-based, Chromium-powered headless browser cluster that enables developers to run large-scale concurrent browser instances and handle complex interactions on protected pages. Perfect for AI infrastructure, web automation, data scraping, page rendering, and automated testing.
 
-The Scrapeless Browser provides a secure, isolated browser environment that allows you to interact with web applications while minimizing potential risks to your system.
+**[The Scrapeless Browser](https://www.scrapeless.com/en)** provides a secure, isolated browser environment that allows you to interact with web applications while minimizing potential risks to your system.
 
 ### ✨ **Key Features**
 
