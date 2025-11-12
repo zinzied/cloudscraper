@@ -343,6 +343,9 @@ class CloudScraper(Session):
         self.enable_intelligent_challenges = enable_intelligent_challenges
         if self.enable_intelligent_challenges:
             self.intelligent_challenge_system = IntelligentChallengeSystem(self)
+            # Configure for maximum success rate
+            if hasattr(self.intelligent_challenge_system, 'configure_for_high_success'):
+                self.intelligent_challenge_system.configure_for_high_success()
         else:
             self.intelligent_challenge_system = None
 
