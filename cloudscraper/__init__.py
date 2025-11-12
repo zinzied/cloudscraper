@@ -617,28 +617,33 @@ class CloudScraper(Session):
             challenge_detected, challenge_response = self.intelligent_challenge_system.process_response(
                 response, **kwargs
             )
-            
+
             if challenge_detected:
                 if self.debug:
                     print('🧠 Intelligent challenge system detected and handled challenge')
-                
-                # CRITICAL FIX: Decrement concurrent request counter before challenge handling
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (intelligent challenge): {self.current_concurrent_requests}')
-                
+
                 if challenge_response and challenge_response.get('retry'):
                     # Prevent infinite recursion by incrementing solve depth
                     self._solveDepthCnt += 1
                     if self._solveDepthCnt >= self.solveDepth:
                         if self.debug:
                             print('⚠️ Maximum solve depth reached, returning original response')
+                        # Decrement counter only if we tracked it and are returning
+                        if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                            self.current_concurrent_requests -= 1
+                            if self.debug:
+                                print(f'🔢 Concurrent requests decremented (max depth): {self.current_concurrent_requests}')
                         return response
                     # Retry with modified parameters
                     modified_kwargs = challenge_response.get('modified_kwargs', kwargs)
+                    # Don't decrement counter here - let the recursive call handle it
                     return self.request(method, url, *args, **modified_kwargs)
                 elif challenge_response:
+                    # Decrement counter for successful challenge response
+                    if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                        self.current_concurrent_requests -= 1
+                        if self.debug:
+                            print(f'🔢 Concurrent requests decremented (challenge response): {self.current_concurrent_requests}')
                     return challenge_response
         
         # Record request outcome for adaptive systems
@@ -669,18 +674,17 @@ class CloudScraper(Session):
             if self.debug:
                 print('🛡️ Cloudflare challenge detected, using advanced bypass system...')
 
-            # CRITICAL FIX: Decrement concurrent request counter before challenge handling
-            if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                self.current_concurrent_requests -= 1
-                if self.debug:
-                    print(f'🔢 Concurrent requests decremented (advanced challenge): {self.current_concurrent_requests}')
-
             try:
                 if hasattr(self.challenge_system, 'handle_challenge_response'):
                     challenge_response = self.challenge_system.handle_challenge_response(response)
                     if challenge_response and challenge_response.status_code == 200:
                         if self.debug:
                             print('✅ Advanced challenge bypass successful!')
+                        # Decrement counter for successful challenge response
+                        if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                            self.current_concurrent_requests -= 1
+                            if self.debug:
+                                print(f'🔢 Concurrent requests decremented (advanced challenge success): {self.current_concurrent_requests}')
                         return challenge_response
                     else:
                         if self.debug:
@@ -709,11 +713,7 @@ class CloudScraper(Session):
                 self._solveDepthCnt += 1
                 if self.debug:
                     print('Detected a Cloudflare Turnstile challenge.')
-                # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (Turnstile challenge): {self.current_concurrent_requests}')
+                # Don't decrement counter here - let the challenge handler manage it
                 response = self.turnstile.handle_Turnstile_Challenge(response, **kwargs)
                 return response
 
@@ -724,11 +724,7 @@ class CloudScraper(Session):
                 self._solveDepthCnt += 1
                 if self.debug:
                     print('Detected a Cloudflare v3 JavaScript VM challenge.')
-                # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (v3 challenge): {self.current_concurrent_requests}')
+                # Don't decrement counter here - let the challenge handler manage it
                 response = self.cloudflare_v3.handle_V3_Challenge(response, **kwargs)
                 return response
 
@@ -737,22 +733,14 @@ class CloudScraper(Session):
             # Check for v2 Captcha Challenge
             if self.cloudflare_v2.is_captcha_challenge(response):
                 self._solveDepthCnt += 1
-                # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (v2 captcha challenge): {self.current_concurrent_requests}')
+                # Don't decrement counter here - let the challenge handler manage it
                 response = self.cloudflare_v2.handle_captcha_challenge(response, **kwargs)
                 return response
 
             # Check for v2 JavaScript Challenge
             if self.cloudflare_v2.is_challenge(response):
                 self._solveDepthCnt += 1
-                # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (v2 JS challenge): {self.current_concurrent_requests}')
+                # Don't decrement counter here - let the challenge handler manage it
                 response = self.cloudflare_v2.handle_challenge(response, **kwargs)
                 return response
 
@@ -762,11 +750,7 @@ class CloudScraper(Session):
             if self.cloudflare_v1.is_Challenge_Request(response):
                 # Try to solve the challenge and send it back
                 self._solveDepthCnt += 1
-                # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                    self.current_concurrent_requests -= 1
-                    if self.debug:
-                        print(f'🔢 Concurrent requests decremented (v1 challenge): {self.current_concurrent_requests}')
+                # Don't decrement counter here - let the challenge handler manage it
                 response = self.cloudflare_v1.Challenge_Response(response, **kwargs)
                 return response
 
@@ -888,9 +872,16 @@ class CloudScraper(Session):
 
                 try:
                     # Make a lightweight request to trigger challenge solving
-                    # Only store status code to avoid memory waste on large responses
-                    test_response = super(CloudScraper, self).get(base_url, timeout=30)
-                    status_code = test_response.status_code
+                    # Use a simple HEAD request first to avoid heavy content
+                    try:
+                        test_response = super(CloudScraper, self).head(base_url, timeout=10)
+                        status_code = test_response.status_code
+                    except:
+                        # If HEAD fails, try GET with stream=True to avoid loading content
+                        test_response = super(CloudScraper, self).get(base_url, timeout=10, stream=True)
+                        status_code = test_response.status_code
+                        # Close the stream immediately to avoid memory issues
+                        test_response.close()
 
                     # Only return True if we got a successful response
                     success = status_code in [200, 301, 302, 304]
