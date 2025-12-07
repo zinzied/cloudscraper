@@ -1,5 +1,5 @@
-# CloudScraper version 3.1.1
-cloudscraper==3.1.1
+# CloudScraper version 3.1.2
+cloudscraper==3.1.2
 
 # Production Dependencies
 requests >= 2.31.0

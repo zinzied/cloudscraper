@@ -31,6 +31,7 @@ class captchaSolver(Captcha):
         self.session = requests.Session()
         self.captchaType = {
             'reCaptcha': 'NoCaptchaTask',
+            'reCaptchaV3': 'RecaptchaV3Task',
             'hCaptcha': 'HCaptchaTask',
             'turnstile': 'TurnstileTask'
         }
@@ -95,7 +96,7 @@ class captchaSolver(Captcha):
 
     # ------------------------------------------------------------------------------- #
 
-    def requestSolve(self, captchaType, url, siteKey):
+    def requestSolve(self, captchaType, url, siteKey, action=None, min_score=None):
         def _checkRequest(response):
             self.checkErrorStatus(response)
 
@@ -113,6 +114,15 @@ class captchaSolver(Captcha):
             },
             'softId': 37
         }
+
+        # Add reCAPTCHA v3 specific parameters
+        if captchaType == 'reCaptchaV3':
+            if action:
+                data['task']['pageAction'] = action
+            if min_score:
+                data['task']['minScore'] = min_score
+            else:
+                data['task']['minScore'] = 0.3  # Default minimum score
 
         if self.proxy:
             data['task'].update(self.proxy)
@@ -174,8 +184,12 @@ class captchaSolver(Captcha):
         else:
             self.proxy = None
 
+        # Extract reCAPTCHA v3 specific parameters
+        action = captchaParams.get('action')
+        min_score = captchaParams.get('min_score')
+
         try:
-            taskID = self.requestSolve(captchaType, url, siteKey)
+            taskID = self.requestSolve(captchaType, url, siteKey, action=action, min_score=min_score)
             return self.requestJob(taskID)
         except polling2.TimeoutException:
             try:

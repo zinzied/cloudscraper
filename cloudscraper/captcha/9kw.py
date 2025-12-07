@@ -32,6 +32,7 @@ class captchaSolver(Captcha):
         self.session = requests.Session()
         self.captchaType = {
             'reCaptcha': 'recaptchav2',
+            'reCaptchaV3': 'recaptchav3',
             'hCaptcha': 'hcaptcha'
         }
 
@@ -148,7 +149,7 @@ class captchaSolver(Captcha):
 
     # ------------------------------------------------------------------------------- #
 
-    def requestSolve(self, captchaType, url, siteKey):
+    def requestSolve(self, captchaType, url, siteKey, action=None, min_score=None):
         def _checkRequest(response):
             if response.ok and response.text.startswith('{') and response.json().get('captchaid'):
                 return response
@@ -157,19 +158,28 @@ class captchaSolver(Captcha):
 
             return None
 
+        data = {
+            'apikey': self.api_key,
+            'action': 'usercaptchaupload',
+            'interactive': 1,
+            'file-upload-01': siteKey,
+            'oldsource': self.captchaType[captchaType],
+            'pageurl': url,
+            'maxtimeout': self.maxtimeout,
+            'json': 1
+        }
+
+        # Add reCAPTCHA v3 specific parameters
+        if captchaType == 'reCaptchaV3':
+            if action:
+                data['action'] = action
+            if min_score:
+                data['min_score'] = min_score
+
         response = polling.poll(
             lambda: self.session.post(
                 self.host,
-                data={
-                    'apikey': self.api_key,
-                    'action': 'usercaptchaupload',
-                    'interactive': 1,
-                    'file-upload-01': siteKey,
-                    'oldsource': self.captchaType[captchaType],
-                    'pageurl': url,
-                    'maxtimeout': self.maxtimeout,
-                    'json': 1
-                },
+                data=data,
                 allow_redirects=False
             ),
             check_success=_checkRequest,
@@ -200,8 +210,12 @@ class captchaSolver(Captcha):
         if captchaType not in self.captchaType:
             raise CaptchaException(f'9kw: {captchaType} is not supported by this provider.')
 
+        # Extract reCAPTCHA v3 specific parameters
+        action = captchaParams.get('action')
+        min_score = captchaParams.get('min_score')
+
         try:
-            jobID = self.requestSolve(captchaType, url, siteKey)
+            jobID = self.requestSolve(captchaType, url, siteKey, action=action, min_score=min_score)
             return self.requestJob(jobID)
         except polling.TimeoutException:
             raise CaptchaTimeout(

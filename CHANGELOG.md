@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.2] - 2025-12-07
+
+### 🎯 **reCAPTCHA v3 Support**
+- **NEW**: Added reCAPTCHA v3 support to all 6 CAPTCHA solving providers
+- **NEW**: `action` parameter for specifying the page action from grecaptcha.execute()
+- **NEW**: `min_score` parameter for setting minimum acceptable score threshold (0.0-1.0)
+
+### 📦 **Supported Providers with v3**
+| Provider | Task Type |
+|----------|-----------|
+| 2captcha | `userrecaptcha` + `version=v3` |
+| anticaptcha | `RecaptchaV3TaskProxyless` |
+| capsolver | `ReCaptchaV3TaskProxyless` |
+| capmonster | `RecaptchaV3TaskProxyless` |
+| 9kw | `recaptchav3` |
+| deathbycaptcha | Type `5` |
+
+### 🔧 **Usage Example**
+```python
+scraper = cloudscraper.create_scraper(
+    captcha={
+        'provider': 'anticaptcha',
+        'clientKey': 'your_api_key',
+        'action': 'submit',      # reCAPTCHA v3 action
+        'min_score': 0.5         # Minimum score (0.3 default)
+    }
+)
+```
+
+### 📚 **Documentation**
+- Updated README with reCAPTCHA v3 documentation and usage examples
+- Added parameter reference table and score guidelines
+
+---
+
 ## [3.1.1] - 2025-09-03
 
 ### 🔥 **ENHANCED BYPASS EDITION - Revolutionary Anti-Detection Technologies**

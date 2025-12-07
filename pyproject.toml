@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudscraper"
-version = "3.1.1"
+version = "3.1.2"
 description = "Enhanced Python library to bypass Cloudflare's anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation."
 readme = "README.md"
 license = {text = "MIT"}

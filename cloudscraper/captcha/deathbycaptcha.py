@@ -32,6 +32,7 @@ class captchaSolver(Captcha):
         self.session = requests.Session()
         self.captchaType = {
             'reCaptcha': '4',
+            'reCaptchaV3': '5',
             'hCaptcha': '7'
         }
 
@@ -159,7 +160,7 @@ class captchaSolver(Captcha):
 
     # ------------------------------------------------------------------------------- #
 
-    def requestSolve(self, captchaType, url, siteKey):
+    def requestSolve(self, captchaType, url, siteKey, action=None, min_score=None):
         def _checkRequest(response):
             if response.ok and response.json().get("is_correct") and response.json().get('captcha'):
                 return response
@@ -173,11 +174,20 @@ class captchaSolver(Captcha):
             'password': self.password,
         }
 
-        if captchaType == 'reCaptcha':
+        if captchaType in ['reCaptcha', 'reCaptchaV3']:
             jPayload = {
                 'googlekey': siteKey,
                 'pageurl': url
             }
+
+            # Add reCAPTCHA v3 specific parameters
+            if captchaType == 'reCaptchaV3':
+                if action:
+                    jPayload['action'] = action
+                if min_score:
+                    jPayload['min_score'] = min_score
+                else:
+                    jPayload['min_score'] = 0.3  # Default minimum score
 
             if self.proxy:
                 jPayload.update({
@@ -254,8 +264,12 @@ class captchaSolver(Captcha):
         if captchaType not in self.captchaType:
             raise CaptchaException(f'DeathByCaptcha: {captchaType} is not supported by this provider.')
 
+        # Extract reCAPTCHA v3 specific parameters
+        action = captchaParams.get('action')
+        min_score = captchaParams.get('min_score')
+
         try:
-            jobID = self.requestSolve(captchaType, url, siteKey)
+            jobID = self.requestSolve(captchaType, url, siteKey, action=action, min_score=min_score)
             return self.requestJob(jobID)
         except polling2.TimeoutException:
             try:

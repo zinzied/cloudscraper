@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.1.1 🚀 - Enhanced Bypass Edition
+# CloudScraper v3.1.2 🚀 - Enhanced Bypass Edition
 
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **cutting-edge advanced stealth capabilities**, async support, and comprehensive monitoring. This enhanced edition includes state-of-the-art anti-detection technologies designed to bypass the majority of modern Cloudflare protections.
@@ -64,7 +64,7 @@ This version includes revolutionary anti-detection capabilities that dramaticall
 - **🔄 Adaptive Learning**: Continuously improves bypass strategies based on success/failure patterns
 - **🌐 Multi-Domain Intelligence**: Learns and optimizes for specific website protection patterns
 
-## ✨ What's New in v3.1.1 Enhanced Edition
+## ✨ What's New in v3.1.2 Enhanced Edition
 
 ### 🚀 **Core New Features**
 - **🔄 Async Support**: High-performance concurrent scraping with `AsyncCloudScraper`
@@ -580,6 +580,42 @@ Supported CAPTCHA providers:
 - CapMonster Cloud
 - deathbycaptcha
 - 9kw
+
+### reCAPTCHA v3 Support (NEW!)
+
+All CAPTCHA providers now support **reCAPTCHA v3** with the `action` and `min_score` parameters:
+
+```python
+# reCAPTCHA v3 configuration
+scraper = cloudscraper.create_scraper(
+    captcha={
+        'provider': '2captcha',  # or 'anticaptcha', 'capsolver', 'capmonster', etc.
+        'api_key': 'your_api_key',
+        'action': 'submit',      # Optional: The page action (from grecaptcha.execute)
+        'min_score': 0.5         # Optional: Minimum score threshold (0.1-0.9)
+    }
+)
+```
+
+**Key reCAPTCHA v3 Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `action` | string | None | The action name from the site's reCAPTCHA implementation |
+| `min_score` | float | 0.3 | Minimum acceptable score (0.0=bot, 1.0=human) |
+
+**Finding the Action Name:**
+
+The action parameter is typically visible in the site's JavaScript. Look for calls like:
+```javascript
+grecaptcha.execute('site_key', {action: 'submit'})
+```
+
+**Score Guidelines:**
+- `0.1-0.3`: Low confidence (most permissive)
+- `0.4-0.6`: Medium confidence (recommended)
+- `0.7-0.9`: High confidence (may fail more often)
+
 
 ## Complete Examples
 

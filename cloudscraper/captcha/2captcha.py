@@ -31,6 +31,7 @@ class captchaSolver(Captcha):
         self.session = requests.Session()
         self.captchaType = {
             'reCaptcha': 'userrecaptcha',
+            'reCaptchaV3': 'userrecaptcha',
             'hCaptcha': 'hcaptcha',
             'turnstile': 'turnstile'
         }
@@ -166,7 +167,7 @@ class captchaSolver(Captcha):
 
     # ------------------------------------------------------------------------------- #
 
-    def requestSolve(self, captchaType, url, siteKey):
+    def requestSolve(self, captchaType, url, siteKey, action=None, min_score=None):
         def _checkRequest(response):
             self.checkErrorStatus(response, 'in.php')
             if response.ok and response.json().get("status") == 1 and response.json().get('request'):
@@ -182,8 +183,16 @@ class captchaSolver(Captcha):
 
         data.update({
             'method': self.captchaType[captchaType],
-            'googlekey' if captchaType == 'reCaptcha' else 'sitekey': siteKey
+            'googlekey' if captchaType in ['reCaptcha', 'reCaptchaV3'] else 'sitekey': siteKey
         })
+
+        # Add reCAPTCHA v3 specific parameters
+        if captchaType == 'reCaptchaV3':
+            data['version'] = 'v3'
+            if action:
+                data['action'] = action
+            if min_score:
+                data['min_score'] = min_score
 
         if self.proxy:
             data.update({
@@ -236,8 +245,12 @@ class captchaSolver(Captcha):
         else:
             self.proxy = None
 
+        # Extract reCAPTCHA v3 specific parameters
+        action = captchaParams.get('action')
+        min_score = captchaParams.get('min_score')
+
         try:
-            jobID = self.requestSolve(captchaType, url, siteKey)
+            jobID = self.requestSolve(captchaType, url, siteKey, action=action, min_score=min_score)
             return self.requestJob(jobID)
         except polling2.TimeoutException:
             try:
