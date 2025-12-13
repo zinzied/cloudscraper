@@ -308,11 +308,26 @@ class StealthMode:
         self.min_delay = min_delay
         self.max_delay = max_delay
 
-    def calc_reading_time(self, content_length):
+    def calc_reading_time(self, content_length, content_type='text'):
         """How long would it take to read this much text?"""
-        words = content_length / 5  # rough estimate
-        reading_time = (words / self.reading_wpm) * 60
-        reading_time *= random.uniform(0.8, 1.2)  # add some variation
+        # Average reading speed: 200-250 words per minute
+        # Average word is ~5 chars, so ~1000-1250 chars per minute
+        # = ~16-21 chars per second
+        
+        # Adjust based on content type
+        if content_type in ['image', 'video']:
+            # Images/videos: Faster scan (1KB in 0.5s)
+            base_rate = 2000  # chars per second
+        elif content_type in ['json', 'api']:
+            # API responses: No reading time
+            return 0
+        else:
+            # Text content: Normal reading (1KB in ~1s)
+            base_rate = 1000
+        
+        reading_time = content_length / base_rate
+        # Cap at reasonable max (30 seconds)
+        reading_time *= random.uniform(0.8, 1.2) # add some variation
         return max(1.0, min(reading_time, 30.0))
 
     def get_adaptive_delay(self, url=None, content_type=None):

@@ -54,6 +54,11 @@ setup(
         'brotli >= 1.1.0',
         'certifi >= 2024.2.2'
     ],
+    extras_require={
+        'ai': ['ddddocr', 'ultralytics'],
+        'browser': ['playwright'],
+        'all': ['ddddocr', 'ultralytics', 'playwright']
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

@@ -86,6 +86,14 @@ class CloudflareTurnstile():
             )
             
             if not site_key:
+                # Try finding it in window._cf_chl_opt
+                site_key = re.search(r'cFPWv\s?:\s?[\'"]([^\'"]+)[\'"]', resp.text)
+
+            if not site_key:
+                 # Try finding it in script tag json
+                site_key = re.search(r'["\']sitekey["\']\s*:\s*["\']([^"\']+)["\']', resp.text)
+            
+            if not site_key:
                 raise CloudflareTurnstileError("Could not find Turnstile site key")
                 
             # Extract the form action URL

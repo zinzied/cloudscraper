@@ -46,6 +46,9 @@ from .performance import PerformanceMonitor, PerformanceProfiler
 from .challenge_response_system import ChallengeResponseSystem
 from .tls_fingerprinting import TLSFingerprintingManager
 from .anti_detection import AntiDetectionManager
+from .cloudflare_v3 import CloudflareV3
+from .cookie_manager import CookieManager
+from .circuit_breaker import CircuitBreaker
 from .enhanced_spoofing import SpoofingCoordinator
 from .intelligent_challenge_system import IntelligentChallengeSystem
 from .adaptive_timing import SmartTimingOrchestrator
@@ -54,7 +57,7 @@ from .enhanced_error_handling import EnhancedErrorHandler
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.1.2'
+__version__ = '3.2.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -147,12 +150,35 @@ class CloudScraper(Session):
 
         # Cloudflare challenge handling options
         self.disableCloudflareV1 = kwargs.pop('disableCloudflareV1', False)
-        self.disableCloudflareV2 = kwargs.pop('disableCloudflareV2', False)
-        self.disableCloudflareV3 = kwargs.pop('disableCloudflareV3', False)
-        self.disableTurnstile = kwargs.pop('disableTurnstile', False)
+        self.disableCloudflareV2 = kwargs.pop('disableCloudflareV2', True)  # Disabled by default - requires solver
+        self.disableCloudflareV3 = kwargs.pop('disableCloudflareV3', True)  # Disabled by default - causes false positives
+        self.disableTurnstile = kwargs.pop('disableTurnstile', True)  # Disabled by default - requires solver
         self.delay = kwargs.pop('delay', None)
         self.captcha = kwargs.pop('captcha', {})
         self.doubleDown = kwargs.pop('doubleDown', True)
+        
+        # Cookie persistence
+        self.enable_cookie_persistence = kwargs.pop('enable_cookie_persistence', True)
+        cookie_storage_dir = kwargs.pop('cookie_storage_dir', None)
+        cookie_ttl = kwargs.pop('cookie_ttl', 1800)  # 30 minutes default
+        
+        if self.enable_cookie_persistence:
+            self.cookie_manager = CookieManager(cookie_storage_dir, cookie_ttl)
+        else:
+            self.cookie_manager = None
+        
+        # Circuit breaker for preventing infinite loops
+        self.enable_circuit_breaker = kwargs.pop('enable_circuit_breaker', True)
+        circuit_failure_threshold = kwargs.pop('circuit_failure_threshold', 3)
+        circuit_timeout = kwargs.pop('circuit_timeout', 60)
+        
+        if self.enable_circuit_breaker:
+            self.circuit_breaker = CircuitBreaker(
+                failure_threshold=circuit_failure_threshold,
+                timeout=circuit_timeout
+            )
+        else:
+            self.circuit_breaker = None
         self.interpreter = kwargs.pop('interpreter', 'js2py')  # Default to js2py for better compatibility
 
         # Request hooks
@@ -187,9 +213,12 @@ class CloudScraper(Session):
         self.request_count = 0
         self.last_403_time = 0
         self.session_refresh_interval = kwargs.pop('session_refresh_interval', 3600)  # 1 hour default
-        self.auto_refresh_on_403 = kwargs.pop('auto_refresh_on_403', True)
-        self.max_403_retries = kwargs.pop('max_403_retries', 3)
+        self.auto_refresh_on_403 = kwargs.pop('auto_refresh_on_403', False)  # Disabled by default to prevent recursion
+        self.max_403_retries = kwargs.pop('max_403_retries', 1)  # Reduced from 3 to prevent recursion
         self._403_retry_count = 0
+        self._is_refreshing = False  # Guard against recursive session refresh
+        self._request_depth = 0  # Guard against recursive request calls
+        self._max_request_depth = 10  # Maximum allowed recursion depth
 
         # Request throttling and TLS management
         self.last_request_time = 0
@@ -232,7 +261,7 @@ class CloudScraper(Session):
         enable_anti_detection = kwargs.pop('enable_anti_detection', True)
         enable_enhanced_spoofing = kwargs.pop('enable_enhanced_spoofing', True)
         spoofing_consistency_level = kwargs.pop('spoofing_consistency_level', 'medium')
-        enable_intelligent_challenges = kwargs.pop('enable_intelligent_challenges', True)
+        enable_intelligent_challenges = kwargs.pop('enable_intelligent_challenges', False)  # Disabled to prevent recursion
         enable_adaptive_timing = kwargs.pop('enable_adaptive_timing', True)
         behavior_profile = kwargs.pop('behavior_profile', 'casual')
         enable_ml_optimization = kwargs.pop('enable_ml_optimization', True)
@@ -437,6 +466,18 @@ class CloudScraper(Session):
     # ------------------------------------------------------------------------------- #
 
     def request(self, method, url, *args, **kwargs):
+        # Guard against infinite recursion
+        self._request_depth += 1
+        if self._request_depth > self._max_request_depth:
+            self._request_depth = 0  # Reset for next call
+            raise RecursionError(f'Maximum request depth ({self._max_request_depth}) exceeded for {url}')
+        
+        try:
+            return self._do_request(method, url, *args, **kwargs)
+        finally:
+            self._request_depth -= 1
+
+    def _do_request(self, method, url, *args, **kwargs):
         # Start timing for adaptive algorithms
         request_start_time = time.time()
         
@@ -493,6 +534,27 @@ class CloudScraper(Session):
             webgl_fp = fingerprints.get('webgl', {})
             if webgl_fp:
                 kwargs['headers']['X-WebGL-Fingerprint'] = webgl_fp.get('hash', '')
+
+        # Check circuit breaker before making request
+        if self.circuit_breaker:
+            domain = urlparse(url).netloc
+            if not self.circuit_breaker.is_allowed(domain):
+                from .exceptions import CloudflareLoopProtection
+                state = self.circuit_breaker.get_status(domain)
+                raise CloudflareLoopProtection(
+                    f"Circuit breaker is OPEN for {domain}. "
+                    f"Too many failures ({state['failure_count']}). "
+                    f"Retry after {self.circuit_breaker.timeout} seconds."
+                )
+
+        # Load saved cookies if available
+        if self.cookie_manager:
+            domain = urlparse(url).netloc
+            saved_cookies = self.cookie_manager.load_cookies(domain)
+            if saved_cookies:
+                self.cookies.update(saved_cookies)
+                if self.debug:
+                    print(f'🍪 Loaded {len(saved_cookies)} saved cookies for {domain}')
 
         # Check if session needs refresh due to age
         if self._should_refresh_session():
@@ -704,6 +766,12 @@ class CloudScraper(Session):
                 self.current_concurrent_requests -= 1
                 if self.debug:
                     print(f'🔢 Concurrent requests decremented (loop protection): {self.current_concurrent_requests}')
+            
+            # Record failure in circuit breaker before raising exception
+            if self.circuit_breaker:
+                domain = urlparse(url).netloc
+                self.circuit_breaker.record_failure(domain, 'loop_protection')
+            
             self.simpleException(
                 CloudflareLoopProtection,
                 f"!!Loop Protection!! We have tried to solve {_} time(s) in a row."
@@ -720,9 +788,8 @@ class CloudScraper(Session):
                 response = self.turnstile.handle_Turnstile_Challenge(response, **kwargs)
                 return response
 
-        # Check for Cloudflare v3 challenges (if not disabled)
+        # Check for Cloudflare v3 JavaScript VM Challenge
         if not self.disableCloudflareV3:
-            # Check for v3 JavaScript VM Challenge
             if self.cloudflare_v3.is_V3_Challenge(response):
                 self._solveDepthCnt += 1
                 if self.debug:
@@ -813,6 +880,25 @@ class CloudScraper(Session):
             if self.debug:
                 print(f'🔢 Concurrent requests decremented (normal completion): {self.current_concurrent_requests}')
 
+        # Save cookies after successful request (especially after challenge bypass)
+        if self.cookie_manager and response.status_code == 200:
+            domain = urlparse(url).netloc
+            cookies_dict = self.cookies.get_dict()
+            
+            # Check if we have CF cookies worth saving
+            cf_cookies = {k: v for k, v in cookies_dict.items() 
+                         if k in self.cookie_manager.cf_cookie_names}
+            
+            if cf_cookies:
+                saved = self.cookie_manager.save_cookies(domain, cookies_dict)
+                if saved and self.debug:
+                    print(f'🍪 Saved {len(cf_cookies)} CF cookies for {domain}')
+        
+        # Record success in circuit breaker
+        if self.circuit_breaker and response.status_code == 200:
+            domain = urlparse(url).netloc
+            self.circuit_breaker.record_success(domain)
+
         return response
 
     # ------------------------------------------------------------------------------- #
@@ -823,6 +909,10 @@ class CloudScraper(Session):
         """
         Check if the session should be refreshed based on age and other factors
         """
+        # Prevent recursive refresh calls
+        if self._is_refreshing:
+            return False
+        
         current_time = time.time()
         session_age = current_time - self.session_start_time
 
@@ -840,6 +930,9 @@ class CloudScraper(Session):
         """
         Refresh the session by clearing cookies and re-establishing connection
         """
+        # Set refreshing flag to prevent recursive calls
+        self._is_refreshing = True
+        
         try:
             if self.debug:
                 print('Refreshing session due to staleness or 403 errors...')
@@ -915,6 +1008,9 @@ class CloudScraper(Session):
             if self.debug:
                 print(f'❌ Error during session refresh: {e}')
             return False
+        finally:
+            # Always reset refreshing flag
+            self._is_refreshing = False
 
     def _clear_cloudflare_cookies(self):
         """

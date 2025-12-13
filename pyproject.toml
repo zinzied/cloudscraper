@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cloudscraper"
-version = "3.1.2"
-description = "Enhanced Python library to bypass Cloudflare's anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation."
+version = "3.2.0"
+description = "Enhanced Python library to bypass Cloudflare's anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, behavioral simulation, and 10 industrial-strength bypass strategies."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -35,7 +35,14 @@ keywords = [
     "webgl-spoofing",
     "fingerprint-resistance",
     "automation",
-    "turnstile"
+    "turnstile",
+    "cookie-persistence",
+    "hybrid-solver",
+    "browser-automation",
+    "circuit-breaker",
+    "session-pool",
+    "rate-limiter",
+    "challenge-prediction"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -98,6 +105,14 @@ test = [
     "aioresponses>=0.7.8",
     "pytest-mock>=3.14.0",
     "httpx>=0.28.0"
+]
+ai = [
+    "ddddocr",
+    "ultralytics",
+    "pillow>=10.0.0"
+]
+browser = [
+    "playwright>=1.40.0"
 ]
 
 [project.urls]

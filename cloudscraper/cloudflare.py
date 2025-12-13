@@ -174,18 +174,6 @@ class Cloudflare():
                 'Cloudflare has blocked this request (Code 1020 Detected).'
             )
 
-        if self.is_New_Captcha_Challenge(resp):
-            self.cloudscraper.simpleException(
-                CloudflareChallengeError,
-                'Detected a Cloudflare version 2 Captcha challenge, This feature is not available in the opensource (free) version.'
-            )
-
-        if self.is_New_IUAM_Challenge(resp):
-            self.cloudscraper.simpleException(
-                CloudflareChallengeError,
-                'Detected a Cloudflare version 2 challenge, This feature is not available in the opensource (free) version.'
-            )
-
         if self.is_Captcha_Challenge(resp) or self.is_IUAM_Challenge(resp):
             if self.cloudscraper.debug:
                 print('Detected a Cloudflare version 1 challenge.')
@@ -271,10 +259,37 @@ class Cloudflare():
             captchaType = 'reCaptcha' if payload['name="cf_captcha_kind" value'] == 're' else 'hCaptcha'
 
         except (AttributeError, KeyError):
-            self.cloudscraper.simpleException(
-                CloudflareCaptchaError,
-                "Cloudflare Captcha detected, unfortunately we can't extract the parameters correctly."
-            )
+            # Try V2/Turnstile extraction if V1 form parse failed
+            try:
+                # Look for sitekey in script tags (common in V2/Turnstile)
+                siteKeyMatch = re.search(r'["\']sitekey["\']\s*:\s*["\']([^"\']+)["\']', body)
+                if not siteKeyMatch:
+                     siteKeyMatch = re.search(r'data-sitekey=["\']([^"\']+)["\']', body)
+                
+                if siteKeyMatch:
+                    payload = OrderedDict()
+                    payload['data-sitekey'] = siteKeyMatch.group(1)
+                    payload['name="cf_captcha_kind" value'] = 'hCaptcha' # Default to hCaptcha/Turnstile flow
+                    
+                    # Try to find ray ID
+                    rayMatch = re.search(r'data-ray=["\']([^"\']+)["\']', body)
+                    if rayMatch:
+                        payload['data-ray'] = rayMatch.group(1)
+                    else:
+                        # Fallback ray ID from header if available, or empty
+                        payload['data-ray'] = ''
+                        
+                    captchaType = 'hCaptcha' # Treat as hCaptcha for solver compatibility unless Turnstile specific
+                else:
+                    self.cloudscraper.simpleException(
+                        CloudflareCaptchaError,
+                        "Cloudflare Captcha detected, unfortunately we can't extract the parameters correctly."
+                    )
+            except Exception:
+                self.cloudscraper.simpleException(
+                    CloudflareCaptchaError,
+                    "Cloudflare Captcha detected, unfortunately we can't extract the parameters correctly."
+                )
 
         # ------------------------------------------------------------------------------- #
         # Pass proxy parameter to provider to solve captcha.
