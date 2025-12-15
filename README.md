@@ -54,11 +54,13 @@ The scraper now deeply integrates **Google Gemini 1.5 Flash** to solve complex v
 # Pass your Google API Key to enable AI Solving
 scraper = cloudscraper.create_scraper(
     interpreter='hybrid',
-    google_api_key='YOUR_GEMINI_API_KEY'
+    google_api_key='YOUR_GEMINI_API_KEY',
+    # Proxies are automatically used for AI requests too!
+    rotating_proxies=['http://user:pass@proxy:port']
 )
 ```
 
-## 🔥 **Hybrid Engine (v3.3.0)** - The Ultimate Solution
+## 🔥 **Hybrid Engine** - The Ultimate Solution
 
 The **Hybrid Engine** is a game-changer that combines two powerful technologies:
 1.  **TLS-Chameleon (`curl_cffi`)**: Provides perfect TLS fingerprinting (JA3/JA4) to mimic real browsers at the network layer.
@@ -87,7 +89,7 @@ This version includes **10 production-ready bypass strategies**:
 
 ### **Phase 1: Foundation Features**
 
-#### 1. 🧬 **The Hybrid Engine** (New in v3.3.0)
+#### 1. 🧬 **The Hybrid Engine** (Introduced in v3.3.0)
 The most powerful mode available. Requires `cloudscraper[hybrid]`.
 
 ```python
