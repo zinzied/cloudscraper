@@ -13,7 +13,7 @@ setup(
     name = 'cloudscraper',
     author = 'Zied Boughdir, VeNoMouS',
     author_email = 'ziedboughdir@gmail.com',
-    version=VERSION,
+    version='3.3.0',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     py_modules = [],
     python_requires='>=3.8',
@@ -57,7 +57,8 @@ setup(
     extras_require={
         'ai': ['ddddocr', 'ultralytics'],
         'browser': ['playwright'],
-        'all': ['ddddocr', 'ultralytics', 'playwright']
+        'hybrid': ['tls-chameleon>=1.1.0', 'py-parkour>=1.0.0'],
+        'all': ['ddddocr', 'ultralytics', 'playwright', 'tls-chameleon>=1.1.0', 'py-parkour>=1.0.0']
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',

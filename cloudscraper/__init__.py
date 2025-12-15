@@ -7,7 +7,22 @@ import ssl
 import time
 
 from requests.adapters import HTTPAdapter
-from requests.sessions import Session
+from requests.adapters import HTTPAdapter
+try:
+    from tls_chameleon import Session as ChameleonSession
+    from curl_cffi import requests as curl_requests
+    HAS_CURL_CFFI = True
+except ImportError:
+    ChameleonSession = None
+    HAS_CURL_CFFI = False
+    from requests.sessions import Session
+
+# If Chameleon is available, we can use it as a Mixin or Base
+if HAS_CURL_CFFI:
+    Session = ChameleonSession
+else:
+    from requests.sessions import Session
+
 from requests_toolbelt.utils import dump
 
 # ------------------------------------------------------------------------------- #
@@ -54,10 +69,11 @@ from .intelligent_challenge_system import IntelligentChallengeSystem
 from .adaptive_timing import SmartTimingOrchestrator
 from .ml_optimization import MLBypassOrchestrator
 from .enhanced_error_handling import EnhancedErrorHandler
+from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.2.0'
+__version__ = '3.3.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -289,8 +305,20 @@ class CloudScraper(Session):
         for param in custom_params:
             kwargs.pop(param, None)
 
+        # Default to stable fingerprint for curl_cffi if not specified
+        impersonate_fingerprint = kwargs.pop('impersonate', None)
+
         # Initialize the session
         super(CloudScraper, self).__init__(*args, **kwargs)
+
+        if HAS_CURL_CFFI:
+             # Set fingerprint (default to chrome120 if not provided, to fix ios17_0 issues)
+             self.impersonate = impersonate_fingerprint or 'chrome120'
+
+        # Ensure cookies attribute exists (fix for curl_cffi/TLS-Chameleon compat)
+        if not hasattr(self, 'cookies'):
+            from requests.cookies import RequestsCookieJar
+            self.cookies = RequestsCookieJar()
 
         # Set up User-Agent and headers
         if 'requests' in str(self.headers.get('User-Agent', '')):
@@ -312,16 +340,18 @@ class CloudScraper(Session):
             self.cipherSuite = ':'.join(self.cipherSuite)
 
         # Mount the HTTPS adapter with our custom cipher suite
-        self.mount(
-            'https://',
-            CipherSuiteAdapter(
-                cipherSuite=self.cipherSuite,
-                ecdhCurve=self.ecdhCurve,
-                server_hostname=self.server_hostname,
-                source_address=self.source_address,
-                ssl_context=self.ssl_context
+        # ONLY if we are NOT using curl_cffi (which handles TLS natively)
+        if not HAS_CURL_CFFI:
+            self.mount(
+                'https://',
+                CipherSuiteAdapter(
+                    cipherSuite=self.cipherSuite,
+                    ecdhCurve=self.ecdhCurve,
+                    server_hostname=self.server_hostname,
+                    source_address=self.source_address,
+                    ssl_context=self.ssl_context
+                )
             )
-        )
 
         # Initialize Cloudflare handlers
         self.cloudflare_v1 = Cloudflare(self)
@@ -401,6 +431,12 @@ class CloudScraper(Session):
         else:
             self.enhanced_error_handler = None
 
+        # Hybrid Engine (The "Brain" & "Hands")
+        try:
+            self.hybrid_engine = HybridEngine(self)
+        except ImportError:
+            self.hybrid_engine = None
+
         # Allow pickle serialization
         copyreg.pickle(ssl.SSLContext, lambda obj: (obj.__class__, (obj.protocol,)))
 
@@ -472,6 +508,10 @@ class CloudScraper(Session):
             self._request_depth = 0  # Reset for next call
             raise RecursionError(f'Maximum request depth ({self._max_request_depth}) exceeded for {url}')
         
+        # Default to stable fingerprint for curl_cffi if not specified (fix ios17_0 issue)
+        if HAS_CURL_CFFI and 'impersonate' not in kwargs:
+            kwargs['impersonate'] = getattr(self, 'impersonate', 'chrome120')
+
         try:
             return self._do_request(method, url, *args, **kwargs)
         finally:
@@ -485,14 +525,14 @@ class CloudScraper(Session):
         self._apply_request_throttling()
 
         # Rotate TLS cipher suites to avoid detection
-        if self.rotate_tls_ciphers and self.tls_fingerprinting_manager:
+        if self.rotate_tls_ciphers and self.tls_fingerprinting_manager and not HAS_CURL_CFFI:
             ssl_context = self.tls_fingerprinting_manager.get_ssl_context()
             # Update the HTTPS adapter with new SSL context
             self.mount('https://', CipherSuiteAdapter(
                 ssl_context=ssl_context,
                 source_address=self.source_address
             ))
-        elif self.rotate_tls_ciphers:
+        elif self.rotate_tls_ciphers and not HAS_CURL_CFFI:
             self._rotate_tls_cipher_suite()
 
         # Apply anti-detection preprocessing
@@ -683,6 +723,43 @@ class CloudScraper(Session):
                 response, **kwargs
             )
 
+            # ------------------------------------------------------------------------------- #
+            # Hybrid Engine (The "Brain" & "Hands") - Browser Bridge
+            # ------------------------------------------------------------------------------- #
+            if self.hybrid_engine and challenge_detected and (self.interpreter == 'hybrid' or self.interpreter == 'auto'):
+                 if self.debug:
+                     print("🧠 Hybrid Engine: Activating Browser Bridge...")
+                 
+                 try:
+                     # Launch the "Brain" (Parkour)
+                     result = self.hybrid_engine.solve_challenge(response.url)
+                     
+                     # Phase 3 (The Handoff)
+                     if result:
+                         # Update session cookies
+                         self.cookies.update(result.get('cookies', {}))
+                         # Update User-Agent if needed
+                         if result.get('user_agent'):
+                             self.headers['User-Agent'] = result['user_agent']
+                             # Update internal UA tracker
+                             if hasattr(self, 'user_agent'):
+                                 self.user_agent.user_agent = result['user_agent']
+                         
+                         if self.debug:
+                             print("🧠 Hybrid Engine: Challenge solved! Handoff complete.")
+                             
+                         # Phase 4 (The Speed) - Retry the request with new credentials
+                         # Decrement counter before retry to avoid double counting
+                         if concurrent_request_tracked and self.current_concurrent_requests > 0:
+                            self.current_concurrent_requests -= 1
+                         
+                         return self.request(method, url, *args, **kwargs)
+                 except Exception as e:
+                     if self.debug:
+                         print(f"🧠 Hybrid Engine: Failed to solve challenge: {e}")
+                         
+            # ------------------------------------------------------------------------------- #
+
             if challenge_detected:
                 if self.debug:
                     print('🧠 Intelligent challenge system detected and handled challenge')
@@ -825,7 +902,7 @@ class CloudScraper(Session):
                 return response
 
         # Reset solve depth counter if no challenge was detected
-        if not response.is_redirect and response.status_code not in [429, 503]:
+        if not getattr(response, 'is_redirect', False) and response.status_code not in [429, 503]:
             self._solveDepthCnt = 0
             # Reset 403 retry count on successful request (ONLY if not in retry mode)
             if response.status_code == 200 and not hasattr(self, '_in_403_retry'):

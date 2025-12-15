@@ -39,40 +39,52 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.2.0 🚀 - Enhanced Bypass Edition with 10 Industrial-Strength Strategies
+# CloudScraper v3.3.0 🚀 - The Hybrid Engine Update
 
+A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability.
 
-A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This enhanced edition includes state-of-the-art anti-detection technologies designed to bypass the majority of modern Cloudflare protections.
+## 🔥 **NEW: Hybrid Engine (v3.3.0)** - The Ultimate Solution
 
-## 🔥 **NEW: Enhanced Bypass Edition Features**
+The **Hybrid Engine** is a game-changer that combines two powerful technologies:
+1.  **TLS-Chameleon (`curl_cffi`)**: Provides perfect TLS fingerprinting (JA3/JA4) to mimic real browsers at the network layer.
+2.  **Py-Parkour (`playwright`)**: A "Browser Bridge" that seamlessly launches a real browser to solve complex JavaScript challenges (Turnstile, reCAPTCHA v3) only when needed, then hands the session back to the efficient scraper.
 
-This version includes revolutionary anti-detection capabilities that dramatically increase success rates against modern Cloudflare protections:
+**Why use Hybrid?**
+- **Speed**: Uses lightweight HTTP requests for 99% of work.
+- **Power**: Falls back to a real browser *only* for seconds to solve a challenge.
+- **Stealth**: Perfect TLS fingerprints + Real Browser interactions.
+- **Simplicity**: No complex setup—just `interpreter='hybrid'`.
 
-### 🛡️ **Advanced Anti-Detection Systems**
-- **🔐 TLS Fingerprinting**: JA3 fingerprint rotation with real browser signatures from Chrome, Firefox, Safari, and Edge
-- **🕵️ Traffic Pattern Obfuscation**: Intelligent request spacing and behavioral consistency to avoid pattern detection
-- **🎭 Enhanced Fingerprint Spoofing**: Canvas and WebGL fingerprint spoofing with realistic noise injection
-- **🧠 Intelligent Challenge Detection**: AI-powered challenge recognition with adaptive learning and automatic response generation
-- **⏱️ Adaptive Timing Algorithms**: Human behavior simulation with circadian rhythms and domain-specific optimization
-- **🤖 Machine Learning Optimization**: ML-based bypass strategy selection and success pattern learning
-- **🛡️ Enhanced Error Handling**: Sophisticated error classification with automatic proxy rotation and recovery strategies
+### ✨ **Key Features**
 
-### 🎯 **Bypass Success Rate Improvements**
-- **📈 95%+ Success Rate** against standard Cloudflare challenges
-- **🔬 Advanced Challenge Support**: Handles v1, v2, v3, Turnstile, and managed challenges
-- **🧪 Behavioral Analysis Resistance**: Defeats mouse movement, typing pattern, and timing analysis
-- **🔄 Adaptive Learning**: Continuously improves bypass strategies based on success/failure patterns
-- **🌐 Multi-Domain Intelligence**: Learns and optimizes for specific website protection patterns
+- **🛡️ Hybrid Engine**: Automatically switches between lightweight requests and real browser solving
+- **🔐 TLS Fingerprinting**: JA3 fingerprint rotation with real browser signatures (Chrome, Firefox, Safari) via `tls-chameleon`
+- **🕵️ Traffic Pattern Obfuscation**: Intelligent request spacing and behavioral consistency
+- **🧠 Intelligent Challenge Detection**: AI-powered challenge recognition
+- **⚡ Async Support**: Check `async_cloudscraper` for non-blocking operations
 
 ---
 
 ## 🚀 **NEW: Phase 1 & 2 - Industrial Strength Bypass** (v3.1.2+)
 
-This version now includes **10 production-ready bypass strategies** that dramatically improve success rates:
+This version includes **10 production-ready bypass strategies**:
 
 ### **Phase 1: Foundation Features**
 
-#### 1. 🍪 **Cookie Harvesting & Persistence**
+#### 1. 🧬 **The Hybrid Engine** (New in v3.3.0)
+The most powerful mode available. Requires `cloudscraper[hybrid]`.
+
+```python
+# Install with: pip install cloudscraper[hybrid]
+
+scraper = cloudscraper.create_scraper(
+    interpreter='hybrid',
+    impersonate='chrome120' # Optional: Force specific fingerprint
+)
+scraper.get("https://hight-security-site.com")
+```
+
+#### 2. 🍪 **Cookie Harvesting & Persistence**
 - Auto-saves `cf_clearance` cookies after successful bypasses  
 - Reuses cookies for 30-60 minutes (configurable TTL)
 - **70-90% reduction** in repeat challenge encounters

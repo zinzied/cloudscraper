@@ -4,10 +4,11 @@ This document describes the comprehensive enhancements made to CloudScraper to b
 
 ## 🚀 Overview of Enhancements
 
-The enhanced CloudScraper includes 10 major new systems that work together to provide sophisticated anti-bot detection evasion:
-
-1. **Enhanced TLS Fingerprinting** - JA3 randomization and cipher rotation
-2. **Advanced Anti-Detection** - Traffic pattern obfuscation and payload spoofing
+7: The enhanced CloudScraper includes 11 major new systems that work together to provide sophisticated anti-bot detection evasion:
+8: 
+9: 1. **Hybrid Engine** - The ultimate weapon: TLS-Chameleon + Py-Parkour Browser Bridge
+10: 2. **Enhanced TLS Fingerprinting** - JA3 randomization and cipher rotation
+11: 3. **Advanced Anti-Detection** - Traffic pattern obfuscation and payload spoofing
 3. **ML-Based Fingerprint Resistance** - Machine learning-based detection evasion
 4. **Intelligent Challenge Detection** - Automated challenge recognition and response
 5. **Adaptive Timing Algorithms** - Human-like behavior simulation
@@ -19,7 +20,29 @@ The enhanced CloudScraper includes 10 major new systems that work together to pr
 
 ## 📋 Feature Details
 
-### 1. Enhanced TLS Fingerprinting (`tls_fingerprinting.py`)
+### 1. The Hybrid Engine (`hybrid_engine.py`)
+
+**Purpose**: The most powerful bypass mechanism available, combining the speed of HTTP requests with the capability of a real browser.
+
+**Key Components**:
+- `TLS-Chameleon` (`curl_cffi`): Provides low-level TLS fingerprint spoofing (JA3/JA4) that mimics real browsers perfectly at the packet level.
+- `Py-Parkour` (`playwright`): Acts as a "Browser Bridge". It remains dormant until a complex challenge is detected.
+- `HybridEngine`: Coordinates the handoff. If `TLS-Chameleon` hits a wall, `HybridEngine` wakes effects `Py-Parkour`, solves the challenge in a headless browser, extracts the `cf_clearance` cookie, and hands it back to the scraper.
+
+**Features**:
+- **Best of Both Worlds**: Speed of `requests` + Power of `Chrome`.
+- **Zero Configuration**: Just set `interpreter='hybrid'`.
+- **Auto-Fallback**: Only uses the browser when absolutely necessary.
+
+**Usage**:
+```python
+scraper = cloudscraper.create_scraper(
+    interpreter='hybrid',
+    impersonate='chrome120'
+)
+```
+
+### 2. Enhanced TLS Fingerprinting (`tls_fingerprinting.py`)
 
 **Purpose**: Avoid TLS-based detection by rotating JA3 fingerprints and cipher suites.
 

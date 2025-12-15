@@ -1,5 +1,5 @@
-# CloudScraper version 3.2.0
-cloudscraper==3.2.0
+# CloudScraper version 3.3.0
+cloudscraper==3.3.0
 
 # Production Dependencies
 requests >= 2.31.0
@@ -38,3 +38,7 @@ PyYAML >= 6.0.0
 # pytest-cov >= 4.1.0
 # black >= 23.0.0
 # flake8 >= 6.0.0
+
+# Hybrid Engine Dependencies
+tls-chameleon>=1.1.0
+py-parkour>=1.0.0

@@ -245,10 +245,15 @@ class RequestOptimizer:
     def optimize_session(self, session):
         """Optimize requests session for performance"""
         # Configure connection pooling
-        adapter = session.get_adapter('https://')
-        if hasattr(adapter, 'config'):
-            adapter.config['pool_connections'] = self.connection_pool_size
-            adapter.config['pool_maxsize'] = self.connection_pool_size
+        # Configure connection pooling
+        if hasattr(session, 'get_adapter'):
+            try:
+                adapter = session.get_adapter('https://')
+                if hasattr(adapter, 'config'):
+                    adapter.config['pool_connections'] = self.connection_pool_size
+                    adapter.config['pool_maxsize'] = self.connection_pool_size
+            except Exception:
+                pass
         
         # Set timeouts
         if not hasattr(session, 'timeout'):
