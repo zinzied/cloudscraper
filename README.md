@@ -50,6 +50,15 @@ The scraper now deeply integrates **Google Gemini 1.5 Flash** to solve complex v
 2.  **Intelligent Solving**: Visually inspects every tile, matches objects, and solves the puzzle just like a human.
 3.  **Fast & Cheap**: Uses Gemini 1.5 Flash for millisecond latency.
 
+### ✅ Verified Features
+
+| Feature | Status |
+|---------|--------|
+| reCAPTCHA v2 Solving | ✅ Tested |
+| Text Captcha (Generic) | ✅ Tested |
+| Hybrid Engine | ✅ Tested |
+| Cloudflare Bypass | ✅ Tested |
+
 ```python
 # Pass your Google API Key to enable AI Solving
 scraper = cloudscraper.create_scraper(
