@@ -228,14 +228,88 @@ class AIHybridSolver:
             print(f"AI Gemini Error (Tile): {e}")
             return False
 
-    async def solve(self, page, url):
+    def _ask_gemini_text(self, image_bytes):
+        """
+        Ask Gemini to read text from an image (Complicated Text Captcha).
+        """
+        try:
+            prompt = "Read the text from the image and give me only the exact text answer. Do not include any explanation."
+            response = self.model.generate_content([
+                {'mime_type': 'image/png', 'data': image_bytes},
+                prompt
+            ])
+            return response.text.strip()
+        except Exception as e:
+            print(f"AI Gemini Error (Text): {e}")
+            return None
+
+    async def _solve_complicated_text(self, page, selector, input_selector, submit_selector=None):
+        """
+        Solves a generic text captcha defined by selectors.
+        """
+        print(f"AIHybridSolver: Identifying Text Captcha via selector '{selector}'...")
+        
+        try:
+            # 1. Find and screenshot the captcha image
+            captcha_img = await page.wait_for_selector(selector, timeout=5000)
+            if not captcha_img:
+                print("AIHybridSolver: Text Captcha image not found.")
+                return False
+                
+            if not await captcha_img.is_visible():
+                print("AIHybridSolver: Text Captcha image is not visible.")
+                return False
+                
+            image_bytes = await captcha_img.screenshot()
+            
+            # 2. Ask Gemini
+            text = self._ask_gemini_text(image_bytes)
+            print(f"AIHybridSolver: Solved Text -> '{text}'")
+            
+            if not text:
+                return False
+                
+            # 3. Input validity check
+            # Some captchas are numeric or alphanumeric. We trust Gemini for now.
+            
+            # 4. Enter Text
+            input_field = await page.wait_for_selector(input_selector, timeout=5000)
+            if not input_field:
+                 print("AIHybridSolver: Input field not found.")
+                 return False
+            
+            await input_field.fill(text)
+            
+            # 5. Submit (Optional)
+            if submit_selector:
+                submit_btn = await page.wait_for_selector(submit_selector, timeout=2000)
+                if submit_btn:
+                    await submit_btn.click()
+                    await asyncio.sleep(2) # Wait for page load
+            
+            return True
+            
+        except Exception as e:
+            print(f"AIHybridSolver: Error solving text captcha: {e}")
+            return False
+
+    async def solve(self, page, url, captcha_options=None):
         """
         Main entry point to solve captchas on the page.
         """
         if not self.is_available():
             print("AIHybridSolver: Gemini API key missing or library not installed.")
             return False
-            
+        
+        # Check for configured Text Captcha
+        if captcha_options and 'text_captcha' in captcha_options:
+            tc = captcha_options['text_captcha']
+            selector = tc.get('selector')
+            input_selector = tc.get('input_selector')
+            submit_selector = tc.get('submit_selector')
+            if selector and input_selector:
+                return await self._solve_complicated_text(page, selector, input_selector, submit_selector)
+
         # Detect captcha type
         # For now, we focus on reCAPTCHA v2 as per reference repo logic
         if await page.locator("//iframe[contains(@src, 'recaptcha/api2/anchor')]").count() > 0:

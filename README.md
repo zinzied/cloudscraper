@@ -58,6 +58,19 @@ scraper = cloudscraper.create_scraper(
     # Proxies are automatically used for AI requests too!
     rotating_proxies=['http://user:pass@proxy:port']
 )
+
+# For Complicated Text Captchas (Non-Standard)
+scraper = cloudscraper.create_scraper(
+    interpreter='hybrid',
+    google_api_key='YOUR_GEMINI_API_KEY',
+    captcha={
+        'text_captcha': {
+            'selector': '#captcha-image',   # CSS selector for the image
+            'input_selector': '#captcha-input', # CSS selector for the input
+            'submit_selector': '#submit-btn'    # Optional: submit button
+        }
+    }
+)
 ```
 
 ## 🔥 **Hybrid Engine** - The Ultimate Solution

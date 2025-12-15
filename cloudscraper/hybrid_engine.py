@@ -92,7 +92,11 @@ class HybridEngine:
                     await asyncio.sleep(5)
                     
                     # Attempt to solve
-                    solved = await ai_solver.solve(bot.driver.page, url)
+                    solved = await ai_solver.solve(
+                        bot.driver.page, 
+                        url,
+                        captcha_options=self.cloudscraper.captcha
+                    )
                     if solved:
                          if self.debug:
                             print("HybridEngine 🤖: AI Solver reported success!")
