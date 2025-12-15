@@ -81,7 +81,8 @@ class HybridEngine:
                 # Check for AI Solver availability
                 from .captcha.ai_hybrid import AIHybridSolver
                 ai_solver = AIHybridSolver(
-                    api_key=self.cloudscraper.google_api_key
+                    api_key=self.cloudscraper.google_api_key,
+                    proxies=self.cloudscraper.proxies
                 )
                 
                 if ai_solver.is_available():

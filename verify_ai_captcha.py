@@ -18,11 +18,16 @@ if not api_key:
 def test_ai_captcha_solving():
     print("=== Testing AI Captcha Solving (Hybrid Engine) ===")
     
+    # Optional Proxy Configuration
+    # Set this to test with proxies, e.g., {'https': 'http://user:pass@ip:port'}
+    proxies = None 
+    
     # Initialize scraper with Hybrid Engine and AI Key
     scraper = cloudscraper.create_scraper(
         debug=True,
         interpreter='hybrid',
-        google_api_key=api_key
+        google_api_key=api_key,
+        rotating_proxies=proxies # Pass proxies if configured
     )
     
     target_url = "https://2captcha.com/demo/recaptcha-v2"

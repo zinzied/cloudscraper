@@ -16,11 +16,25 @@ class AIHybridSolver:
     AI-Powered Captcha Solver for Hybrid Engine.
     Uses Google Gemini (via google-generativeai) to solve visual captchas.
     """
-    def __init__(self, api_key=None, model_name="gemini-1.5-flash"):
+    def __init__(self, api_key=None, proxies=None, model_name="gemini-1.5-flash"):
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
+        self.proxies = proxies
         self.model_name = model_name
         self.client = None
         
+        # Configure Request Options (Proxies)
+        # Google Generative AI uses environment variables for proxies by default.
+        # We set them temporarily for this configuration.
+        # Note: This affects the global process environment, which is a known limitation 
+        # of the current google-generativeai library for proxy configuration.
+        if self.proxies:
+            if 'https' in self.proxies:
+                os.environ['HTTPS_PROXY'] = self.proxies['https']
+                os.environ['https_proxy'] = self.proxies['https']
+            if 'http' in self.proxies:
+                os.environ['HTTP_PROXY'] = self.proxies['http']
+                os.environ['http_proxy'] = self.proxies['http']
+
         if self.api_key and genai:
             genai.configure(api_key=self.api_key)
             self.model = genai.GenerativeModel(self.model_name)
