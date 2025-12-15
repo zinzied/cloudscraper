@@ -18,7 +18,23 @@ This document describes the comprehensive enhancements made to CloudScraper to b
 9. **Comprehensive Testing Framework** - Full test coverage for all features
 10. **Enhanced Error Handling** - Sophisticated retry and recovery mechanisms
 
-## 📋 Feature Details
+## � Free vs. Paid Features
+
+CloudScraper gives you the best of both worlds: robust free tools for most cases, and optional paid integrations for extreme scenarios.
+
+### 🆓 **Free Features (Built-in)**
+These features run locally on your machine and cost nothing:
+- **The Hybrid Engine**: Uses your local Chrome browser via `playwright` to bypass challenges. No API keys required.
+- **Local AI**: `ai_ocr.py` uses local machine learning models to solve simple text/math captchas.
+- **Protocol Bypasses**: TLS Fingerprinting, Anti-Detection, and all core logic are 100% free.
+
+### 💳 **Paid Features (Optional)**
+These are purely optional 3rd-party integrations for solving commercially protected captchas (e.g., reCAPTCHA, Turnstile) without a browser context:
+- **Captcha Solvers**: Integration with 2Captcha, Anti-Captcha, CapSolver, etc. These require your own API key and subscription with those providers.
+
+---
+
+## �📋 Feature Details
 
 ### 1. The Hybrid Engine (`hybrid_engine.py`)
 
