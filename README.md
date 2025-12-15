@@ -39,11 +39,26 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.3.0 🚀 - The Hybrid Engine Update
+# CloudScraper v3.4.0 🚀 - AI & Hybrid Engine Update
 
-A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability.
+A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
-## 🔥 **NEW: Hybrid Engine (v3.3.0)** - The Ultimate Solution
+## 🔥 **NEW: AI Captcha Bypass (v3.4.0)** - Vision-Powered Solving
+
+The scraper now deeply integrates **Google Gemini 1.5 Flash** to solve complex visual challenges like **reCAPTCHA v2**:
+1.  **Visual Understanding**: Analyzes instruction images (e.g., "Select all traffic lights") and identifies target objects.
+2.  **Intelligent Solving**: Visually inspects every tile, matches objects, and solves the puzzle just like a human.
+3.  **Fast & Cheap**: Uses Gemini 1.5 Flash for millisecond latency.
+
+```python
+# Pass your Google API Key to enable AI Solving
+scraper = cloudscraper.create_scraper(
+    interpreter='hybrid',
+    google_api_key='YOUR_GEMINI_API_KEY'
+)
+```
+
+## 🔥 **Hybrid Engine (v3.3.0)** - The Ultimate Solution
 
 The **Hybrid Engine** is a game-changer that combines two powerful technologies:
 1.  **TLS-Chameleon (`curl_cffi`)**: Provides perfect TLS fingerprinting (JA3/JA4) to mimic real browsers at the network layer.
@@ -58,6 +73,7 @@ The **Hybrid Engine** is a game-changer that combines two powerful technologies:
 ### ✨ **Key Features**
 
 - **🛡️ Hybrid Engine**: Automatically switches between lightweight requests and real browser solving
+- **🤖 AI Captcha Solver**: Solves reCAPTCHA v2 using Google Gemini Vision
 - **🔐 TLS Fingerprinting**: JA3 fingerprint rotation with real browser signatures (Chrome, Firefox, Safari) via `tls-chameleon`
 - **🕵️ Traffic Pattern Obfuscation**: Intelligent request spacing and behavioral consistency
 - **🧠 Intelligent Challenge Detection**: AI-powered challenge recognition
@@ -79,7 +95,8 @@ The most powerful mode available. Requires `cloudscraper[hybrid]`.
 
 scraper = cloudscraper.create_scraper(
     interpreter='hybrid',
-    impersonate='chrome120' # Optional: Force specific fingerprint
+    impersonate='chrome120', # Optional: Force specific fingerprint
+    google_api_key='YOUR_API_KEY' # Optional: For AI Captcha solving
 )
 scraper.get("https://hight-security-site.com")
 ```

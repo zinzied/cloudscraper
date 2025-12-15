@@ -73,7 +73,7 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.3.0'
+__version__ = '3.4.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -171,6 +171,7 @@ class CloudScraper(Session):
         self.disableTurnstile = kwargs.pop('disableTurnstile', True)  # Disabled by default - requires solver
         self.delay = kwargs.pop('delay', None)
         self.captcha = kwargs.pop('captcha', {})
+        self.google_api_key = kwargs.pop('google_api_key', None)
         self.doubleDown = kwargs.pop('doubleDown', True)
         
         # Cookie persistence
@@ -295,7 +296,7 @@ class CloudScraper(Session):
             'stealth_options', 'rotating_proxies', 'proxy_options', 'cipher_suite',
             'ecdh_curve', 'allow_brotli', 'browser', 'captcha', 'max_retries',
             'retry_backoff_factor', 'retry_on_status', 'connect_timeout',
-            'read_timeout', 'total_timeout', 'custom_headers',
+            'read_timeout', 'total_timeout', 'custom_headers', 'google_api_key',
             # Enhanced feature parameters
             'enable_tls_fingerprinting', 'enable_tls_rotation', 'enable_anti_detection',
             'enable_enhanced_spoofing', 'spoofing_consistency_level', 'enable_intelligent_challenges',
@@ -471,7 +472,7 @@ class CloudScraper(Session):
     def debugRequest(req):
         try:
             print(dump.dump_all(req).decode('utf-8', errors='backslashreplace'))
-        except ValueError as e:
+        except Exception as e:
             print(f"Debug Error: {getattr(e, 'message', e)}")
 
     # ------------------------------------------------------------------------------- #
@@ -1281,6 +1282,7 @@ class CloudScraper(Session):
         - min_request_interval: Minimum time in seconds between requests (default: 1.0)
         - max_concurrent_requests: Maximum number of concurrent requests (default: 1)
         - rotate_tls_ciphers: Whether to rotate TLS cipher suites to avoid detection (default: True)
+        - google_api_key: Google Gemini API Key for AI Captcha Solving
         - disableCloudflareV3: Whether to disable Cloudflare v3 JavaScript VM challenge handling (default: False)
         - disableTurnstile: Whether to disable Cloudflare Turnstile challenge handling (default: False)
         """

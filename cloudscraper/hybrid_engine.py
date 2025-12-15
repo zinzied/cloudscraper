@@ -29,6 +29,27 @@ class HybridEngine:
                 "Install with 'pip install py-parkour>=1.0.0'"
             )
 
+
+
+    def solve_challenge(self, url):
+        """
+        Synchronous wrapper for the async solver.
+        Call this from the main cloudscraper thread when a challenge is detected.
+        """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+        if loop.is_running():
+             # Handle nested event loops if necessary (e.g. using nest_asyncio logic if available)
+             # For now, we assume simple sync blocking call
+             import nest_asyncio
+             nest_asyncio.apply()
+        
+        return loop.run_until_complete(self._solve_async(url))
+
     async def _solve_async(self, url):
         """
         Asynchronously solve the challenge using ParkourBot.
@@ -55,6 +76,26 @@ class HybridEngine:
                 # Intelligent wait: 
                 # 1. Wait until "Just a moment" is gone OR
                 # 2. cf_clearance cookie is present
+                # 3. OR if we have an AI solver, try to solve actively
+                
+                # Check for AI Solver availability
+                from .captcha.ai_hybrid import AIHybridSolver
+                ai_solver = AIHybridSolver(
+                    api_key=self.cloudscraper.google_api_key
+                )
+                
+                if ai_solver.is_available():
+                    if self.debug:
+                        print("HybridEngine 🤖: AI Solver is active. Attempting to solve captchas...")
+                    # Give it a moment to load
+                    await asyncio.sleep(5)
+                    
+                    # Attempt to solve
+                    solved = await ai_solver.solve(bot.driver.page, url)
+                    if solved:
+                         if self.debug:
+                            print("HybridEngine 🤖: AI Solver reported success!")
+                
                 await bot.driver.page.wait_for_condition(
                    "() => document.cookie.includes('cf_clearance') || !document.title.includes('Just a moment')",
                    timeout=30000 
@@ -86,23 +127,4 @@ class HybridEngine:
             if self.debug:
                 print(f"HybridEngine 🛑: Closing Browser Bridge.")
             await bot.close()
-
-    def solve_challenge(self, url):
-        """
-        Synchronous wrapper for the async solver.
-        Call this from the main cloudscraper thread when a challenge is detected.
-        """
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-        if loop.is_running():
-             # Handle nested event loops if necessary (e.g. using nest_asyncio logic if available)
-             # For now, we assume simple sync blocking call
-             import nest_asyncio
-             nest_asyncio.apply()
-        
-        return loop.run_until_complete(self._solve_async(url))
 
