@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.5.1 🚀 - AI & Hybrid Engine Update
+# CloudScraper v3.5.2 🚀 - AI & Hybrid Engine Update
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -294,7 +294,15 @@ If you find this library useful, consider supporting its development:
 > [!NOTE]
 > This is a maintained fork of the original cloudscraper library. 
 > You can use this version (`ai-cloudscraper`) as a drop-in replacement while waiting for updates to the original library, or continue using it as your primary driver as we will consistently update it with the latest anti-detection technologies.
- 
+> [!IMPORTANT]
+> **Import Note:**
+> Even though you install the package as `ai-cloudscraper`, you still import it as `cloudscraper` in your Python code.
+> This package is designed as a drop-in replacement.
+>
+> ```python
+> # Correct usage
+> import cloudscraper
+> ``` 
 ```bash
 # Install maintained version (Recommended)
 pip install ai-cloudscraper
