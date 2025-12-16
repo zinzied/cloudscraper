@@ -13,7 +13,7 @@ setup(
     name = 'ai-cloudscraper',
     author = 'Zied Boughdir, VeNoMouS',
     author_email = 'ziedboughdir@gmail.com',
-    version='3.5.0',
+    version='3.5.1',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     py_modules = [],
     python_requires='>=3.8',

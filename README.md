@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.5.0 🚀 - AI & Hybrid Engine Update
+# CloudScraper v3.5.1 🚀 - AI & Hybrid Engine Update
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -242,6 +242,25 @@ scraper = cloudscraper.create_scraper(**config)
 #### 10. 🎭 **Enhanced Timing** (from Phase 1)
 - Content-type aware delays
 - Adaptive reading time calculation
+
+#### 11. 🧩 **Cloudflare JSD Solver** (New in v3.5.1)
+- Solves Cloudflare's specific "JavaScript Detection" (JSD) challenge.
+- Uses a custom LZString implementation to handle dynamic alphabets.
+- Essential for sites like Crypto.com and others using this specific protection.
+
+```python
+from cloudscraper.jsd_solver import JSDSolver
+
+# If you encounter a JSD challenge (raw script content):
+solver = JSDSolver(user_agent="Mozilla/5.0...")
+solution = solver.solve(script_content)
+
+# Returns the 'wp' (window properties) payload and 's' (secret) key
+# {
+#   "wp": "compressed_payload...",
+#   "s": "secret_key"
+# }
+```
 
 ---
 
