@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.4.0 🚀 - AI & Hybrid Engine Update
+# CloudScraper v3.5.0 🚀 - AI & Hybrid Engine Update
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -255,27 +255,39 @@ scraper = cloudscraper.create_scraper(**config)
 | + Browser Fallback | 99%+ | Slow | Hardest sites |
 
 ### 📚 **Documentation**
-- 📖 [Phase 1 Features Guide](BYPASS_FEATURES.md)
-- 📖 [Phase 2 Features Guide](PHASE2_FEATURES.md)
+
+See [ENHANCED_FEATURES.md](ENHANCED_FEATURES.md) for detailed documentation on all bypass strategies.
 
 ---
+
+## ☕ Support This Project
+
+If you find this library useful, consider supporting its development:
+
+<a href="https://www.buymeacoffee.com/zied">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="210" />
+</a>
 
 ---
 
 ## Installation
-
+ 
+> [!NOTE]
+> This is a maintained fork of the original cloudscraper library. 
+> You can use this version (`ai-cloudscraper`) as a drop-in replacement while waiting for updates to the original library, or continue using it as your primary driver as we will consistently update it with the latest anti-detection technologies.
+ 
 ```bash
-# Basic install
-pip install cloudscraper
-
-# Or install from source
+# Install maintained version (Recommended)
+pip install ai-cloudscraper
+ 
+# Install with AI solvers (Phase 1)
+pip install ai-cloudscraper[ai]
+ 
+# Install with browser automation (Phase 1)
+pip install ai-cloudscraper[browser]
+ 
+# Or install from source (Development)
 pip install -e .
-
-# With AI solvers (Phase 1 - optional)
-pip install cloudscraper[ai]
-
-# With browser automation (Phase 1 - optional)
-pip install cloudscraper[browser]
 ```
 
 ## 🚀 Quick Start

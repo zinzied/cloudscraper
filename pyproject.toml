@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cloudscraper"
-version = "3.4.0"
+name = "ai-cloudscraper"
+version = "3.5.0"
 description = "Enhanced Python library to bypass Cloudflare's anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, behavioral simulation, and 10 industrial-strength bypass strategies."
 readme = "README.md"
 license = {text = "MIT"}
