@@ -2,6 +2,7 @@
 
 import logging
 import requests
+import ai_urllib4
 import sys
 import ssl
 import time
@@ -73,9 +74,15 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.5.1'
+__version__ = '3.6.0'
 
 # ------------------------------------------------------------------------------- #
+
+__author__ = 'VeNoMouS'
+__credits__ = ['VeNoMouS', 'Zied Boughdir']
+__email__ = 'venom@venomous.io', 'ziedboughdir@gmail.com'
+__maintainer__ = 'Zied Boughdir'
+__status__ = 'Production'
 
 
 class CipherSuiteAdapter(HTTPAdapter):
@@ -481,13 +488,12 @@ class CloudScraper(Session):
 
     def decodeBrotli(self, resp):
         try:
-            import requests.packages.urllib3 as urllib3_mod
-            if urllib3_mod.__version__ < '1.25.1' and resp.headers.get('Content-Encoding') == 'br':
+            if ai_urllib4.__version__ < '1.1.2' and resp.headers.get('Content-Encoding') == 'br':
                 if self.allow_brotli and resp._content:
                     resp._content = brotli.decompress(resp.content)
                 else:
                     logging.warning(
-                        f'You\'re running urllib3 {urllib3_mod.__version__}, Brotli content detected, '
+                        f'You\'re running ai-urllib4 {ai_urllib4.__version__}, Brotli content detected, '
                         'Which requires manual decompression, '
                         'But option allow_brotli is set to False, '
                         'We will not continue to decompress.'

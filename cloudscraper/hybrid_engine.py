@@ -54,8 +54,14 @@ class HybridEngine:
         """
         Asynchronously solve the challenge using ParkourBot.
         """
-        # Initialize ParkourBot (headless by default, but maybe configurable)
-        bot = ParkourBot(headless=True)
+        # Initialize ParkourBot (headless by default)
+        # Using Py-Parkour 2.2.0 features: 
+        # - GhostCursor for human-like movement
+        # - Solicitor for automated captcha handling
+        bot = ParkourBot(
+            headless=True,
+            gadgets=['ghost_cursor', 'solicitor', 'shadow'] 
+        )
         
         try:
             if self.debug:
@@ -63,22 +69,16 @@ class HybridEngine:
                 
             await bot.start()
             
-            # Navigate to the target URL
-            # Py-Parkour's bot.goto handles some standard anti-detect measures
+            # Using GhostCursor to navigate and move humanly
             await bot.goto(url)
             
             # Wait for successful challenge clearance
-            # We look for the absence of challenge titles or presence of clearance cookies
             try:
                 if self.debug:
                     print(f"HybridEngine ⏳: Waiting for challenge solution...")
-                    
-                # Intelligent wait: 
-                # 1. Wait until "Just a moment" is gone OR
-                # 2. cf_clearance cookie is present
-                # 3. OR if we have an AI solver, try to solve actively
                 
-                # Check for AI Solver availability
+                # If solicitor is active, it handles captchas automatically
+                # But we still check for our AI solver if configured
                 from .captcha.ai_hybrid import AIHybridSolver
                 ai_solver = AIHybridSolver(
                     api_key=self.cloudscraper.google_api_key,
@@ -88,28 +88,20 @@ class HybridEngine:
                 if ai_solver.is_available():
                     if self.debug:
                         print("HybridEngine 🤖: AI Solver is active. Attempting to solve captchas...")
-                    # Give it a moment to load
                     await asyncio.sleep(5)
-                    
-                    # Attempt to solve
-                    solved = await ai_solver.solve(
-                        bot.driver.page, 
-                        url,
-                        captcha_options=self.cloudscraper.captcha
-                    )
-                    if solved:
-                         if self.debug:
-                            print("HybridEngine 🤖: AI Solver reported success!")
+                    await ai_solver.solve(bot.driver.page, url, captcha_options=self.cloudscraper.captcha)
                 
+                # Intelligent wait for clearance
                 await bot.driver.page.wait_for_condition(
                    "() => document.cookie.includes('cf_clearance') || !document.title.includes('Just a moment')",
                    timeout=30000 
                 )
             except Exception as e:
                 if self.debug:
-                    print(f"HybridEngine ⚠️: Wait condition warning (might be OK if solved quickly): {e}")
+                    print(f"HybridEngine ⚠️: Wait condition warning: {e}")
 
             # Extract the "Golden Ticket" (Cookies + User Agent)
+            # Using Shadow (Session Bridge) if available to extract session state
             cookies = await bot.driver.context.cookies()
             user_agent = await bot.driver.page.evaluate("navigator.userAgent")
             

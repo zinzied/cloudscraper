@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.5.2 🚀 - AI & Hybrid Engine Update
+# CloudScraper v3.6.0 🚀 - AI & Hybrid Engine Update
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -102,6 +102,16 @@ The **Hybrid Engine** is a game-changer that combines two powerful technologies:
 - **🕵️ Traffic Pattern Obfuscation**: Intelligent request spacing and behavioral consistency
 - **🧠 Intelligent Challenge Detection**: AI-powered challenge recognition
 - **⚡ Async Support**: Check `async_cloudscraper` for non-blocking operations
+
+---
+
+## 🛠️ **Powered By**
+
+The Hybrid Engine and AI capabilities are built upon these cutting-edge libraries:
+
+- **[ai-urllib4](https://github.com/zinzied/ai-urllib4)**: The next-generation HTTP client for Python, featuring HTTP/2 support, advanced compression (Brotli/Zstd), and AI-optimized connection handling.
+- **[TLS-Chameleon](https://github.com/zinzied/TLS-Chameleon)**: Advanced TLS fingerprinting library that perfectly mimics real browser TLS handshakes (JA3/JA4) to evade detection.
+- **[Py-Parkour](https://github.com/zinzied/Py-Parkour)**: The "Browser Bridge" that seamlessly orchestrates real browser interactions (via Playwright) for solving complex challenges and enhancing stealth.
 
 ---
 

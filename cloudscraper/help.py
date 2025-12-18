@@ -3,7 +3,7 @@ import platform
 import requests
 import ssl
 import sys
-import urllib3
+import ai_urllib4
 
 from collections import OrderedDict
 from . import __version__ as cloudscraper_version
@@ -56,7 +56,7 @@ def systemInfo():
         ('interpreter', _pythonVersion()),
         ('cloudscraper', cloudscraper_version),
         ('requests', requests.__version__),
-        ('urllib3', urllib3.__version__),
+        ('ai-urllib4', ai_urllib4.__version__),
         ('OpenSSL', OrderedDict(
             [
                 ('version', ssl.OPENSSL_VERSION),
