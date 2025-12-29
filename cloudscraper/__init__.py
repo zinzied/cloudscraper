@@ -6,6 +6,7 @@ import ai_urllib4
 import sys
 import ssl
 import time
+import weakref
 
 from requests.adapters import HTTPAdapter
 from requests.adapters import HTTPAdapter
@@ -74,7 +75,7 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.6.0'
+__version__ = '3.6.1'
 
 # ------------------------------------------------------------------------------- #
 
@@ -203,6 +204,9 @@ class CloudScraper(Session):
             )
         else:
             self.circuit_breaker = None
+        # Performance Parity / Compatibility Mode
+        self.compatibility_mode = kwargs.pop('compatibility_mode', False)
+        
         self.interpreter = kwargs.pop('interpreter', 'js2py')  # Default to js2py for better compatibility
 
         # Request hooks
@@ -251,6 +255,24 @@ class CloudScraper(Session):
         self.current_concurrent_requests = 0
         self.rotate_tls_ciphers = kwargs.pop('rotate_tls_ciphers', True)  # Enable TLS cipher rotation
         self._cipher_rotation_count = 0
+
+        # Apply compatibility mode early to affect handler initialization
+        if self.compatibility_mode:
+            self.min_request_interval = 0
+            self.rotate_tls_ciphers = False
+            self.enable_stealth = False
+            # These will be used for initialization below
+            kwargs['enable_metrics'] = False
+            kwargs['enable_performance_monitoring'] = False
+            kwargs['enable_tls_fingerprinting'] = False
+            kwargs['enable_tls_rotation'] = False
+            kwargs['enable_anti_detection'] = False
+            kwargs['enable_enhanced_spoofing'] = False
+            kwargs['enable_ml_optimization'] = False
+            kwargs['enable_enhanced_error_handling'] = False
+            kwargs['enable_adaptive_timing'] = False
+            if self.debug:
+                print("Compatibility Mode: Forcing 3.1.0 parameters")
 
         # Proxy management
         proxy_options = kwargs.pop('proxy_options', {})
@@ -362,10 +384,10 @@ class CloudScraper(Session):
             )
 
         # Initialize Cloudflare handlers
-        self.cloudflare_v1 = Cloudflare(self)
-        self.cloudflare_v2 = CloudflareV2(self)
-        self.cloudflare_v3 = CloudflareV3(self)
-        self.turnstile = CloudflareTurnstile(self)
+        self.cloudflare_v1 = Cloudflare(weakref.proxy(self))
+        self.cloudflare_v2 = CloudflareV2(weakref.proxy(self))
+        self.cloudflare_v3 = CloudflareV3(weakref.proxy(self))
+        self.turnstile = CloudflareTurnstile(weakref.proxy(self))
 
         # Initialize metrics collection
         self.enable_metrics = enable_metrics
@@ -377,7 +399,7 @@ class CloudScraper(Session):
         # Initialize performance monitoring
         self.enable_performance_monitoring = enable_performance_monitoring
         if self.enable_performance_monitoring:
-            self.performance_monitor = PerformanceMonitor(self)
+            self.performance_monitor = PerformanceMonitor(weakref.proxy(self))
             self.performance_monitor.start_monitoring()
         else:
             self.performance_monitor = None
@@ -409,7 +431,7 @@ class CloudScraper(Session):
         # Intelligent challenge system
         self.enable_intelligent_challenges = enable_intelligent_challenges
         if self.enable_intelligent_challenges:
-            self.intelligent_challenge_system = IntelligentChallengeSystem(self)
+            self.intelligent_challenge_system = IntelligentChallengeSystem(weakref.proxy(self))
             # Configure for maximum success rate
             if hasattr(self.intelligent_challenge_system, 'configure_for_high_success'):
                 self.intelligent_challenge_system.configure_for_high_success()
@@ -428,25 +450,59 @@ class CloudScraper(Session):
         # Machine learning optimization
         self.enable_ml_optimization = enable_ml_optimization
         if self.enable_ml_optimization:
-            self.ml_optimizer = MLBypassOrchestrator(self)
+            self.ml_optimizer = MLBypassOrchestrator(weakref.proxy(self))
         else:
             self.ml_optimizer = None
 
         # Enhanced error handling
         self.enable_enhanced_error_handling = enable_enhanced_error_handling
         if self.enable_enhanced_error_handling:
-            self.enhanced_error_handler = EnhancedErrorHandler(self)
+            self.enhanced_error_handler = EnhancedErrorHandler(weakref.proxy(self))
         else:
             self.enhanced_error_handler = None
 
         # Hybrid Engine (The "Brain" & "Hands")
         try:
-            self.hybrid_engine = HybridEngine(self)
+            self.hybrid_engine = HybridEngine(weakref.proxy(self))
         except ImportError:
             self.hybrid_engine = None
 
         # Allow pickle serialization
         copyreg.pickle(ssl.SSLContext, lambda obj: (obj.__class__, (obj.protocol,)))
+
+    def close(self):
+        """
+        Explicitly close the session and cleanup handlers
+        """
+        if self.debug:
+            print("CloudScraper: Closing session and cleaning up resources...")
+
+        # Stop monitoring if active
+        if hasattr(self, 'performance_monitor') and self.performance_monitor:
+            try:
+                self.performance_monitor.stop_monitoring()
+            except Exception:
+                pass
+
+        # Cleanup hybrid engine (close browsers)
+        if hasattr(self, 'hybrid_engine') and self.hybrid_engine:
+            # Note: hybrid_engine handles its own closing via finally blocks usually,
+            # but we can add explicit cleanup if needed.
+            pass
+
+        # Explicitly set handlers to None to break circular refs if weakref failed
+        self.cloudflare_v1 = None
+        self.cloudflare_v2 = None
+        self.cloudflare_v3 = None
+        self.turnstile = None
+        self.intelligent_challenge_system = None
+        self.ml_optimizer = None
+        self.enhanced_error_handler = None
+        self.hybrid_engine = None
+        self.performance_monitor = None
+        
+        # Close the actual requests.Session
+        super(CloudScraper, self).close()
 
     # ------------------------------------------------------------------------------- #
     # Allow us to pickle our session back with all variables
@@ -477,10 +533,17 @@ class CloudScraper(Session):
 
     @staticmethod
     def debugRequest(req):
+        if not req:
+            return
         try:
-            print(dump.dump_all(req).decode('utf-8', errors='backslashreplace'))
+            # Check if it has a request and connection before dumping
+            if hasattr(req, 'request') and hasattr(req, 'connection'):
+                print(dump.dump_all(req).decode('utf-8', errors='backslashreplace'))
+            else:
+                print(f"Debug: Response status {req.status_code} for URL {req.url}")
         except Exception as e:
-            print(f"Debug Error: {getattr(e, 'message', e)}")
+            # Fallback for when dump fails
+            print(f"Debug: Status {getattr(req, 'status_code', 'unknown')} URL {getattr(req, 'url', 'unknown')}")
 
     # ------------------------------------------------------------------------------- #
     # Decode Brotli on older versions of urllib3 manually
@@ -549,7 +612,7 @@ class CloudScraper(Session):
             )
             if should_delay and delay_time > 0:
                 if self.debug:
-                    print(f'⏱️  Anti-detection delay: {delay_time:.2f}s')
+                    print(f'Anti-detection delay: {delay_time:.2f}s')
                 time.sleep(delay_time)
 
         # Apply adaptive timing if enabled
@@ -560,7 +623,7 @@ class CloudScraper(Session):
             )
             if optimal_delay > 0.1:  # Only apply significant delays
                 if self.debug:
-                    print(f'⏱️  Adaptive timing delay: {optimal_delay:.2f}s')
+                    print(f'Adaptive timing delay: {optimal_delay:.2f}s')
                 self.timing_orchestrator.execute_delay(optimal_delay, urlparse(url).netloc)
 
         # Enhanced fingerprint spoofing
@@ -601,7 +664,7 @@ class CloudScraper(Session):
             if saved_cookies:
                 self.cookies.update(saved_cookies)
                 if self.debug:
-                    print(f'🍪 Loaded {len(saved_cookies)} saved cookies for {domain}')
+                    print(f'Loaded {len(saved_cookies)} saved cookies for {domain}')
 
         # Check if session needs refresh due to age
         if self._should_refresh_session():
@@ -631,359 +694,282 @@ class CloudScraper(Session):
         # Track request count
         self.request_count += 1
 
-        # Track concurrent requests - moved to just before actual request
-        # This ensures proper cleanup even if challenges cause early returns
+        # Track concurrent requests
         concurrent_request_tracked = False
-
-        # ------------------------------------------------------------------------------- #
-        # Pre-Hook the request via user defined function.
-        # ------------------------------------------------------------------------------- #
-
-        if self.requestPreHook:
-            (method, url, args, kwargs) = self.requestPreHook(
-                self,
-                method,
-                url,
-                *args,
-                **kwargs
-            )
-
-        # ------------------------------------------------------------------------------- #
-        # Make the request via requests.
-        # ------------------------------------------------------------------------------- #
-
         try:
             # Increment concurrent request counter just before making the request
+            # Moved inside try/finally to ensure decrement
             self.current_concurrent_requests += 1
             concurrent_request_tracked = True
 
             if self.debug:
-                print(f'🔢 Concurrent requests: {self.current_concurrent_requests}/{self.max_concurrent_requests}')
-
-            response = self.decodeBrotli(
-                self.perform_request(method, url, *args, **kwargs)
-            )
-
-            # Report successful proxy use if applicable
-            if kwargs.get('proxies') and hasattr(self, 'proxy_manager'):
-                self.proxy_manager.report_success(kwargs['proxies'])
-
-        except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError) as e:
-            # Report failed proxy use if applicable
-            if kwargs.get('proxies') and hasattr(self, 'proxy_manager'):
-                self.proxy_manager.report_failure(kwargs['proxies'])
-
-            # CRITICAL FIX: Always decrement concurrent request counter on exception
-            if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                self.current_concurrent_requests -= 1
-                if self.debug:
-                    print(f'🔢 Concurrent requests decremented (proxy error): {self.current_concurrent_requests}')
-            raise e
-        except Exception as e:
-            # CRITICAL FIX: Always decrement concurrent request counter on any exception
-            if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                self.current_concurrent_requests -= 1
-                if self.debug:
-                    print(f'🔢 Concurrent requests decremented (exception): {self.current_concurrent_requests}')
-            raise e
-
-        # ------------------------------------------------------------------------------- #
-        # Debug the request via the Response object.
-        # ------------------------------------------------------------------------------- #
-
-        if self.debug:
-            self.debugRequest(response)
-
-        # ------------------------------------------------------------------------------- #
-        # Post-Hook the request aka Post-Hook the response via user defined function.
-        # ------------------------------------------------------------------------------- #
-
-        if self.requestPostHook:
-            newResponse = self.requestPostHook(self, response)
-
-            if response != newResponse:
-                response = newResponse
-                if self.debug:
-                    print('==== requestPostHook Debug ====')
-                    self.debugRequest(response)
-
-        # ------------------------------------------------------------------------------- #
-        # Handle Cloudflare challenges with intelligent detection
-        # ------------------------------------------------------------------------------- #
-
-        # Calculate response time for adaptive learning
-        response_time = time.time() - request_start_time
-        domain = urlparse(url).netloc
-        
-        # Apply ML optimization before request
-        if self.ml_optimizer:
-            optimization_result = self.ml_optimizer.optimize_for_request(domain, {
-                'method': method,
-                'url': url
-            })
-            if self.debug and optimization_result.get('optimized'):
-                print(f"🤖 ML optimization: {optimization_result['strategy']} (confidence: {optimization_result['confidence']:.2f})")
-        
-        # Try intelligent challenge system first (if enabled)
-        if self.intelligent_challenge_system:
-            challenge_detected, challenge_response = self.intelligent_challenge_system.process_response(
-                response, **kwargs
-            )
-
-            # ------------------------------------------------------------------------------- #
-            # Hybrid Engine (The "Brain" & "Hands") - Browser Bridge
-            # ------------------------------------------------------------------------------- #
-            if self.hybrid_engine and challenge_detected and (self.interpreter == 'hybrid' or self.interpreter == 'auto'):
-                 if self.debug:
-                     print("🧠 Hybrid Engine: Activating Browser Bridge...")
-                 
-                 try:
-                     # Launch the "Brain" (Parkour)
-                     result = self.hybrid_engine.solve_challenge(response.url)
-                     
-                     # Phase 3 (The Handoff)
-                     if result:
-                         # Update session cookies
-                         self.cookies.update(result.get('cookies', {}))
-                         # Update User-Agent if needed
-                         if result.get('user_agent'):
-                             self.headers['User-Agent'] = result['user_agent']
-                             # Update internal UA tracker
-                             if hasattr(self, 'user_agent'):
-                                 self.user_agent.user_agent = result['user_agent']
-                         
-                         if self.debug:
-                             print("🧠 Hybrid Engine: Challenge solved! Handoff complete.")
-                             
-                         # Phase 4 (The Speed) - Retry the request with new credentials
-                         # Decrement counter before retry to avoid double counting
-                         if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                            self.current_concurrent_requests -= 1
-                         
-                         return self.request(method, url, *args, **kwargs)
-                 except Exception as e:
-                     if self.debug:
-                         print(f"🧠 Hybrid Engine: Failed to solve challenge: {e}")
-                         
-            # ------------------------------------------------------------------------------- #
-
-            if challenge_detected:
-                if self.debug:
-                    print('🧠 Intelligent challenge system detected and handled challenge')
-
-                if challenge_response and challenge_response.get('retry'):
-                    # Prevent infinite recursion by incrementing solve depth
-                    self._solveDepthCnt += 1
-                    if self._solveDepthCnt >= self.solveDepth:
-                        if self.debug:
-                            print('⚠️ Maximum solve depth reached, returning original response')
-                        # Decrement counter only if we tracked it and are returning
-                        if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                            self.current_concurrent_requests -= 1
-                            if self.debug:
-                                print(f'🔢 Concurrent requests decremented (max depth): {self.current_concurrent_requests}')
-                        return response
-                    # Retry with modified parameters
-                    modified_kwargs = challenge_response.get('modified_kwargs', kwargs)
-                    # Don't decrement counter here - let the recursive call handle it
-                    return self.request(method, url, *args, **modified_kwargs)
-                elif challenge_response:
-                    # Decrement counter for successful challenge response
-                    if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                        self.current_concurrent_requests -= 1
-                        if self.debug:
-                            print(f'🔢 Concurrent requests decremented (challenge response): {self.current_concurrent_requests}')
-                    return challenge_response
-        
-        # Record request outcome for adaptive systems
-        success = response.status_code == 200
-        
-        # Update anti-detection system
-        if self.anti_detection_manager:
-            self.anti_detection_manager.post_request_processing(method, url, response, response_time)
-        
-        # Update adaptive timing system
-        if self.timing_orchestrator:
-            delay_used = response_time  # Approximate delay from timing
-            self.timing_orchestrator.record_request_outcome(domain, success, response_time, delay_used)
-        
-        # Update ML optimization system
-        if self.ml_optimizer:
-            challenge_type = 'none'
-            if hasattr(response, 'headers') and 'cloudflare' in response.headers.get('Server', '').lower():
-                if response.status_code in [403, 429, 503]:
-                    challenge_type = 'cloudflare_challenge'
-            
-            self.ml_optimizer.record_request_outcome(
-                domain, success, response_time, response.status_code, challenge_type
-            )
-
-        # Try advanced challenge handling (legacy system)
-        if hasattr(self, 'challenge_system') and self.challenge_system and self._is_challenge_response(response):
-            if self.debug:
-                print('🛡️ Cloudflare challenge detected, using advanced bypass system...')
+                print(f'Concurrent requests: {self.current_concurrent_requests}/{self.max_concurrent_requests}')
 
             try:
-                if hasattr(self.challenge_system, 'handle_challenge_response'):
-                    challenge_response = self.challenge_system.handle_challenge_response(response)
-                    if challenge_response and challenge_response.status_code == 200:
-                        if self.debug:
-                            print('✅ Advanced challenge bypass successful!')
-                        # Decrement counter for successful challenge response
-                        if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                            self.current_concurrent_requests -= 1
+                response = self.decodeBrotli(
+                    self.perform_request(method, url, *args, **kwargs)
+                )
+
+                # Report successful proxy use if applicable
+                if kwargs.get('proxies') and hasattr(self, 'proxy_manager'):
+                    self.proxy_manager.report_success(kwargs['proxies'])
+
+            except (requests.exceptions.ProxyError, requests.exceptions.ConnectionError) as e:
+                # Report failed proxy use if applicable
+                if kwargs.get('proxies') and hasattr(self, 'proxy_manager'):
+                    self.proxy_manager.report_failure(kwargs['proxies'])
+                raise e
+
+            # ------------------------------------------------------------------------------- #
+            # Debug the request via the Response object.
+            # ------------------------------------------------------------------------------- #
+
+            if self.debug:
+                self.debugRequest(response)
+
+            # ------------------------------------------------------------------------------- #
+            # Post-Hook the request aka Post-Hook the response via user defined function.
+            # ------------------------------------------------------------------------------- #
+
+            if self.requestPostHook:
+                newResponse = self.requestPostHook(self, response)
+
+                if response != newResponse:
+                    response = newResponse
+                    if self.debug:
+                        print('==== requestPostHook Debug ====')
+                        self.debugRequest(response)
+
+            # ------------------------------------------------------------------------------- #
+            # Handle Cloudflare challenges with intelligent detection
+            # ------------------------------------------------------------------------------- #
+
+            # Calculate response time for adaptive learning
+            response_time = time.time() - request_start_time
+            domain = urlparse(url).netloc
+            
+            # Apply ML optimization before request
+            if self.ml_optimizer:
+                optimization_result = self.ml_optimizer.optimize_for_request(domain, {
+                    'method': method,
+                    'url': url
+                })
+                if self.debug and optimization_result.get('optimized'):
+                    print(f"ML optimization: {optimization_result['strategy']} (confidence: {optimization_result['confidence']:.2f})")
+            
+            # Try intelligent challenge system first (if enabled)
+            if self.intelligent_challenge_system:
+                challenge_detected, challenge_response = self.intelligent_challenge_system.process_response(
+                    response, **kwargs
+                )
+
+                # ------------------------------------------------------------------------------- #
+                # Hybrid Engine (The "Brain" & "Hands") - Browser Bridge
+                # ------------------------------------------------------------------------------- #
+                if self.hybrid_engine and challenge_detected and (self.interpreter == 'hybrid' or self.interpreter == 'auto'):
+                     if self.debug:
+                         print("Hybrid Engine: Activating Browser Bridge...")
+                     
+                     try:
+                         # Launch the "Brain" (Parkour)
+                         result = self.hybrid_engine.solve_challenge(response.url)
+                         
+                         # Phase 3 (The Handoff)
+                         if result:
+                             # Update session cookies
+                             self.cookies.update(result.get('cookies', {}))
+                             # Update User-Agent if needed
+                             if result.get('user_agent'):
+                                 self.headers['User-Agent'] = result['user_agent']
+                                 # Update internal UA tracker
+                                 if hasattr(self, 'user_agent'):
+                                     self.user_agent.user_agent = result['user_agent']
+                             
+                             if self.debug:
+                                 print("Hybrid Engine: Challenge solved! Handoff complete.")
+                                 
+                             # Phase 4 (The Speed) - Retry the request with new credentials
+                             return self.request(method, url, *args, **kwargs)
+                     except Exception as e:
+                         if self.debug:
+                             print(f"Hybrid Engine: Failed to solve challenge: {e}")
+                             
+                # ------------------------------------------------------------------------------- #
+
+                if challenge_detected:
+                    if self.debug:
+                        print('Intelligent challenge system detected and handled challenge')
+
+                    if challenge_response and challenge_response.get('retry'):
+                        # Prevent infinite recursion by incrementing solve depth
+                        self._solveDepthCnt += 1
+                        if self._solveDepthCnt >= self.solveDepth:
                             if self.debug:
-                                print(f'🔢 Concurrent requests decremented (advanced challenge success): {self.current_concurrent_requests}')
+                                print('⚠️ Maximum solve depth reached, returning original response')
+                            return response
+
+                        # Retry with modified parameters
+                        modified_kwargs = challenge_response.get('modified_kwargs', kwargs)
+                        return self.request(method, url, *args, **modified_kwargs)
+                    elif challenge_response:
                         return challenge_response
+            
+            # Record request outcome for adaptive systems
+            success = response.status_code == 200
+            
+            # Update anti-detection system
+            if self.anti_detection_manager:
+                self.anti_detection_manager.post_request_processing(method, url, response, response_time)
+            
+            # Update adaptive timing system
+            if self.timing_orchestrator:
+                delay_used = response_time  # Approximate delay from timing
+                self.timing_orchestrator.record_request_outcome(domain, success, response_time, delay_used)
+            
+            # Update ML optimization system
+            if self.ml_optimizer:
+                challenge_type = 'none'
+                if hasattr(response, 'headers') and 'cloudflare' in response.headers.get('Server', '').lower():
+                    if response.status_code in [403, 429, 503]:
+                        challenge_type = 'cloudflare_challenge'
+                
+                self.ml_optimizer.record_request_outcome(
+                    domain, success, response_time, response.status_code, challenge_type
+                )
+
+            # Try advanced challenge handling (legacy system)
+            if hasattr(self, 'challenge_system') and self.challenge_system and self._is_challenge_response(response):
+                if self.debug:
+                    print('🛡️ Cloudflare challenge detected, using advanced bypass system...')
+
+                try:
+                    if hasattr(self.challenge_system, 'handle_challenge_response'):
+                        challenge_response = self.challenge_system.handle_challenge_response(response)
+                        if challenge_response and challenge_response.status_code == 200:
+                            if self.debug:
+                                print('✅ Advanced challenge bypass successful!')
+                            return challenge_response
+                        else:
+                            if self.debug:
+                                print('⚠️ Advanced challenge bypass failed, falling back to standard methods...')
+                except Exception as e:
+                    if self.debug:
+                        print(f'❌ Advanced challenge bypass error: {e}, falling back to standard methods...')
+
+            # Check for loop protection with enhanced tracking
+            if self._solveDepthCnt >= self.solveDepth:
+                _ = self._solveDepthCnt
+                # Reset concurrent counter on loop protection
+                # (Handled by finally block)
+                
+                # Record failure in circuit breaker before raising exception
+                if self.circuit_breaker:
+                    domain = urlparse(url).netloc
+                    self.circuit_breaker.record_failure(domain, 'loop_protection')
+                
+                self.simpleException(
+                    CloudflareLoopProtection,
+                    f"!!Loop Protection!! We have tried to solve {_} time(s) in a row."
+                )
+
+            # Check for Cloudflare Turnstile challenges first (if not disabled)
+            if not self.disableTurnstile:
+                # Check for Turnstile Challenge
+                if self.turnstile.is_Turnstile_Challenge(response):
+                    self._solveDepthCnt += 1
+                    if self.debug:
+                        print('Detected a Cloudflare Turnstile challenge.')
+                    # Don't decrement counter here - let the challenge handler manage it
+                    response = self.turnstile.handle_Turnstile_Challenge(response, **kwargs)
+                    return response
+
+            # Check for Cloudflare v3 JavaScript VM Challenge
+            if not self.disableCloudflareV3:
+                if self.cloudflare_v3.is_V3_Challenge(response):
+                    self._solveDepthCnt += 1
+                    if self.debug:
+                        print('Detected a Cloudflare v3 JavaScript VM challenge.')
+                    # Don't decrement counter here - let the challenge handler manage it
+                    response = self.cloudflare_v3.handle_V3_Challenge(response, **kwargs)
+                    return response
+
+            # Check for Cloudflare v2 challenges (if not disabled)
+            if not self.disableCloudflareV2:
+                # Check for v2 Captcha Challenge
+                if self.cloudflare_v2.is_captcha_challenge(response):
+                    self._solveDepthCnt += 1
+                    # Don't decrement counter here - let the challenge handler manage it
+                    response = self.cloudflare_v2.handle_captcha_challenge(response, **kwargs)
+                    return response
+
+                # Check for v2 JavaScript Challenge
+                if self.cloudflare_v2.is_challenge(response):
+                    self._solveDepthCnt += 1
+                    # Don't decrement counter here - let the challenge handler manage it
+                    response = self.cloudflare_v2.handle_challenge(response, **kwargs)
+                    return response
+
+            # Check for Cloudflare v1 challenges (if not disabled)
+            if not self.disableCloudflareV1:
+                # Check if Cloudflare v1 anti-bot is on
+                if self.cloudflare_v1.is_Challenge_Request(response):
+                    # Try to solve the challenge and send it back
+                    self._solveDepthCnt += 1
+                    # Don't decrement counter here - let the challenge handler manage it
+                    response = self.cloudflare_v1.Challenge_Response(response, **kwargs)
+                    return response
+
+            # Reset solve depth counter if no challenge was detected
+            if not getattr(response, 'is_redirect', False) and response.status_code not in [429, 503]:
+                self._solveDepthCnt = 0
+                # Reset 403 retry count on successful request (ONLY if not in retry mode)
+                if response.status_code == 200 and not hasattr(self, '_in_403_retry'):
+                    self._403_retry_count = 0
+
+            # Handle 403 errors with automatic session refresh
+            if response.status_code == 403 and self.auto_refresh_on_403:
+                if self._403_retry_count < self.max_403_retries:
+                    self._403_retry_count += 1
+                    self.last_403_time = time.time()
+
+                    # Try to refresh the session and retry the request
+                    if self._refresh_session(url):
+                        # Mark that we're in a retry to prevent retry count reset
+                        self._in_403_retry = True
+                        try:
+                            # Retry the original request
+                            retry_response = self.request(method, url, *args, **kwargs)
+
+                            # If retry was successful, reset retry count and return
+                            if retry_response.status_code == 200:
+                                self._403_retry_count = 0
+
+                            if self.debug:
+                                print(f'🛡️ Received 403 error, attempting session refresh (attempt {self._403_retry_count}/{self.max_403_retries})')
+                                print(f'🔄 Session refreshed successfully, retrying original request...')
+                                if retry_response.status_code == 200:
+                                    print('✅ 403 retry successful, request completed')
+
+                            return retry_response
+                        finally:
+                            # Always clear the retry flag
+                            if hasattr(self, '_in_403_retry'):
+                                delattr(self, '_in_403_retry')
                     else:
                         if self.debug:
-                            print('⚠️ Advanced challenge bypass failed, falling back to standard methods...')
-            except Exception as e:
-                if self.debug:
-                    print(f'❌ Advanced challenge bypass error: {e}, falling back to standard methods...')
+                            print(f'Received 403 error, attempting session refresh (attempt {self._403_retry_count}/{self.max_403_retries})')
+                            print('Session refresh failed, returning 403 response')
+                else:
+                    if self.debug:
+                        print(f'Max 403 retries ({self.max_403_retries}) exceeded, returning 403 response')
 
-        # Check for loop protection with enhanced tracking
-        if self._solveDepthCnt >= self.solveDepth:
-            _ = self._solveDepthCnt
-            # Reset concurrent counter on loop protection
+            return response
+        finally:
+            # UNIVERSAL FIX: Always decrement concurrent request counter
             if concurrent_request_tracked and self.current_concurrent_requests > 0:
                 self.current_concurrent_requests -= 1
                 if self.debug:
-                    print(f'🔢 Concurrent requests decremented (loop protection): {self.current_concurrent_requests}')
-            
-            # Record failure in circuit breaker before raising exception
-            if self.circuit_breaker:
-                domain = urlparse(url).netloc
-                self.circuit_breaker.record_failure(domain, 'loop_protection')
-            
-            self.simpleException(
-                CloudflareLoopProtection,
-                f"!!Loop Protection!! We have tried to solve {_} time(s) in a row."
-            )
-
-        # Check for Cloudflare Turnstile challenges first (if not disabled)
-        if not self.disableTurnstile:
-            # Check for Turnstile Challenge
-            if self.turnstile.is_Turnstile_Challenge(response):
-                self._solveDepthCnt += 1
-                if self.debug:
-                    print('Detected a Cloudflare Turnstile challenge.')
-                # Don't decrement counter here - let the challenge handler manage it
-                response = self.turnstile.handle_Turnstile_Challenge(response, **kwargs)
-                return response
-
-        # Check for Cloudflare v3 JavaScript VM Challenge
-        if not self.disableCloudflareV3:
-            if self.cloudflare_v3.is_V3_Challenge(response):
-                self._solveDepthCnt += 1
-                if self.debug:
-                    print('Detected a Cloudflare v3 JavaScript VM challenge.')
-                # Don't decrement counter here - let the challenge handler manage it
-                response = self.cloudflare_v3.handle_V3_Challenge(response, **kwargs)
-                return response
-
-        # Check for Cloudflare v2 challenges (if not disabled)
-        if not self.disableCloudflareV2:
-            # Check for v2 Captcha Challenge
-            if self.cloudflare_v2.is_captcha_challenge(response):
-                self._solveDepthCnt += 1
-                # Don't decrement counter here - let the challenge handler manage it
-                response = self.cloudflare_v2.handle_captcha_challenge(response, **kwargs)
-                return response
-
-            # Check for v2 JavaScript Challenge
-            if self.cloudflare_v2.is_challenge(response):
-                self._solveDepthCnt += 1
-                # Don't decrement counter here - let the challenge handler manage it
-                response = self.cloudflare_v2.handle_challenge(response, **kwargs)
-                return response
-
-        # Check for Cloudflare v1 challenges (if not disabled)
-        if not self.disableCloudflareV1:
-            # Check if Cloudflare v1 anti-bot is on
-            if self.cloudflare_v1.is_Challenge_Request(response):
-                # Try to solve the challenge and send it back
-                self._solveDepthCnt += 1
-                # Don't decrement counter here - let the challenge handler manage it
-                response = self.cloudflare_v1.Challenge_Response(response, **kwargs)
-                return response
-
-        # Reset solve depth counter if no challenge was detected
-        if not getattr(response, 'is_redirect', False) and response.status_code not in [429, 503]:
-            self._solveDepthCnt = 0
-            # Reset 403 retry count on successful request (ONLY if not in retry mode)
-            if response.status_code == 200 and not hasattr(self, '_in_403_retry'):
-                self._403_retry_count = 0
-
-        # Handle 403 errors with automatic session refresh
-        if response.status_code == 403 and self.auto_refresh_on_403:
-            if self._403_retry_count < self.max_403_retries:
-                self._403_retry_count += 1
-                self.last_403_time = time.time()
-
-                # Try to refresh the session and retry the request
-                if self._refresh_session(url):
-                    # Mark that we're in a retry to prevent retry count reset
-                    self._in_403_retry = True
-                    try:
-                        # CRITICAL FIX: Decrement concurrent request counter before recursive call
-                        if concurrent_request_tracked and self.current_concurrent_requests > 0:
-                            self.current_concurrent_requests -= 1
-                            if self.debug:
-                                print(f'🔢 Concurrent requests decremented (403 retry): {self.current_concurrent_requests}')
-
-                        # Retry the original request
-                        retry_response = self.request(method, url, *args, **kwargs)
-
-                        # If retry was successful, reset retry count and return
-                        if retry_response.status_code == 200:
-                            self._403_retry_count = 0
-
-                        if self.debug:
-                            print(f'🛡️ Received 403 error, attempting session refresh (attempt {self._403_retry_count}/{self.max_403_retries})')
-                            print(f'🔄 Session refreshed successfully, retrying original request...')
-                            if retry_response.status_code == 200:
-                                print('✅ 403 retry successful, request completed')
-
-                        return retry_response
-                    finally:
-                        # Always clear the retry flag
-                        if hasattr(self, '_in_403_retry'):
-                            delattr(self, '_in_403_retry')
-                else:
-                    if self.debug:
-                        print(f'🛡️ Received 403 error, attempting session refresh (attempt {self._403_retry_count}/{self.max_403_retries})')
-                        print('❌ Session refresh failed, returning 403 response')
-            else:
-                if self.debug:
-                    print(f'❌ Max 403 retries ({self.max_403_retries}) exceeded, returning 403 response')
-
-        # Decrement concurrent request counter
-        if concurrent_request_tracked and self.current_concurrent_requests > 0:
-            self.current_concurrent_requests -= 1
-            if self.debug:
-                print(f'🔢 Concurrent requests decremented (normal completion): {self.current_concurrent_requests}')
-
-        # Save cookies after successful request (especially after challenge bypass)
-        if self.cookie_manager and response.status_code == 200:
-            domain = urlparse(url).netloc
-            cookies_dict = self.cookies.get_dict()
-            
-            # Check if we have CF cookies worth saving
-            cf_cookies = {k: v for k, v in cookies_dict.items() 
-                         if k in self.cookie_manager.cf_cookie_names}
-            
-            if cf_cookies:
-                saved = self.cookie_manager.save_cookies(domain, cookies_dict)
-                if saved and self.debug:
-                    print(f'🍪 Saved {len(cf_cookies)} CF cookies for {domain}')
-        
-        # Record success in circuit breaker
-        if self.circuit_breaker and response.status_code == 200:
-            domain = urlparse(url).netloc
-            self.circuit_breaker.record_success(domain)
-
-        return response
+                    print(f'Concurrent requests decremented (finally): {self.current_concurrent_requests}')
 
     # ------------------------------------------------------------------------------- #
     # Session health monitoring and refresh methods
@@ -1128,7 +1114,9 @@ class CloudScraper(Session):
                 print(f'⏱️ Request throttling: sleeping {sleep_time:.2f}s')
 
         # Wait if too many concurrent requests
-        if self.current_concurrent_requests >= self.max_concurrent_requests:
+        # Recursive calls (depth > 1) should not be blocked by the concurrency limit
+        # as they are part of the same logical request.
+        if self._request_depth <= 1 and self.current_concurrent_requests >= self.max_concurrent_requests:
             if self.debug:
                 print(f'🚦 Concurrent request limit reached ({self.current_concurrent_requests}/{self.max_concurrent_requests}), waiting...')
             while self.current_concurrent_requests >= self.max_concurrent_requests:

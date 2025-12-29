@@ -39,9 +39,9 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.6.0 🚀 - AI & Hybrid Engine Update
+# CloudScraper v3.6.1 🚀 - Stability & Parity Update
 
-A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10 production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
+A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
 ## 🔥 **NEW: AI Captcha Bypass (v3.4.0)** - Vision-Powered Solving
 
@@ -163,6 +163,14 @@ scraper = cloudscraper.create_scraper(
         '2captcha': {'api_key': 'YOUR_KEY'}
     }
 )
+```
+
+#### 🏎️ **3.1.0 Performance Parity (Compatibility Mode)**
+If you need the raw speed of version 3.1.0 without the overhead of 3.6.0 advanced stealth features:
+
+```python
+# Disables adaptive timing, metrics, and background monitors for maximum speed
+scraper = cloudscraper.create_scraper(compatibility_mode=True)
 ```
 
 #### 3. 🌐 **Browser Automation Helper**
@@ -567,6 +575,7 @@ response = scraper.get("https://example.com")
 | `behavior_profile` | string | 'casual' | Timing profile ('casual', 'focused', 'research', 'mobile') |
 | `enable_ml_optimization` | boolean | True | Enable ML-based bypass optimization |
 | `enable_enhanced_error_handling` | boolean | True | Enable intelligent error recovery |
+| `compatibility_mode` | boolean | False | Disable all 3.6.x overhead for 3.1.x performance |
 
 ### 🎭 **Enhanced Stealth Options**
 

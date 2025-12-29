@@ -1,0 +1,28 @@
+# CloudScraper version 3.1.1
+cloudscraper==3.1.1
+
+# Production Dependencies
+requests >= 2.31.0
+requests_toolbelt >= 1.0.0
+pyparsing >= 3.1.0
+pyOpenSSL >= 24.0.0
+pycryptodome >= 3.20.0
+js2py >= 0.74
+brotli >= 1.1.0
+certifi >= 2024.2.2
+
+# Enhanced Features Dependencies
+numpy >= 1.24.0
+scipy >= 1.10.0
+PyYAML >= 6.0.0
+
+# Optional ML Dependencies (for advanced features)
+# scikit-learn >= 1.3.0
+# tensorflow >= 2.13.0
+# torch >= 2.0.0
+
+# Development Dependencies (optional)
+# pytest >= 7.4.0
+# pytest-cov >= 4.1.0
+# black >= 23.0.0
+# flake8 >= 6.0.0

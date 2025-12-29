@@ -94,7 +94,10 @@ class IntelligentChallengeDetector:
                 r'<div class="cf-turnstile"',
                 r'data-sitekey="[0-9A-Za-z]{40}"',
                 r'src="https://challenges\.cloudflare\.com/turnstile/v0/api\.js',
-                r'cf-turnstile-response'
+                r'cf-turnstile-response',
+                r'<title>Just a moment\.\.\.</title>', # Managed challenge often has this
+                r'id="challenge-error-text"',
+                r'/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1'
             ],
             challenge_type='captcha',
             confidence=0.98,
@@ -143,9 +146,8 @@ class IntelligentChallengeDetector:
         return patterns
     
     def detect_challenge(self, response_text: str, response_headers: Dict[str, str], 
-                        status_code: int, url: str) -> Optional[Dict[str, Any]]:
+                        status_code: int, url: str, debug: bool = False) -> Optional[Dict[str, Any]]:
         """Detect challenge type from response"""
-        
         # Check server header first
         server = response_headers.get('Server', '').lower()
         if 'cloudflare' not in server:
@@ -166,7 +168,6 @@ class IntelligentChallengeDetector:
                     'challenge_type': pattern.challenge_type,
                     'confidence': confidence,
                     'response_strategy': pattern.response_strategy,
-                    'status_code': status_code,
                     'url': url
                 }
         
@@ -175,6 +176,20 @@ class IntelligentChallengeDetector:
         if adaptive_result and adaptive_result['confidence'] > max_confidence:
             detection_result = adaptive_result
         
+        # Fallback for 403/503 from Cloudflare that might be challenges
+        if not detection_result and status_code in [403, 503]:
+            text_lower = response_text.lower()
+            if 'just a moment...' in text_lower or 'challenge-platform' in text_lower or 'cf-turnstile' in text_lower:
+                return {
+                    'pattern_id': 'cf_unknown_managed',
+                    'pattern_name': 'Cloudflare Managed Challenge (Unknown)',
+                    'challenge_type': 'managed',
+                    'confidence': 0.8,
+                    'response_strategy': 'browser_simulation',
+                    'status_code': status_code,
+                    'url': url
+                }
+
         # Record detection
         if detection_result:
             self._record_detection(detection_result)
