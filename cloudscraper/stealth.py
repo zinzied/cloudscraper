@@ -452,3 +452,13 @@ class StealthMode:
             self.screen_w, self.screen_h = random.choice(resolutions)
             self.viewport_w = self.screen_w - random.randint(0, 100)
             self.viewport_h = self.screen_h - random.randint(100, 200)
+
+    def enable_maximum_stealth(self):
+        """Enable all stealth features for high-security sites"""
+        self.human_like_delays = True
+        self.randomize_headers = True
+        self.browser_quirks = True
+        self.simulate_viewport = True
+        self.behavioral_patterns = True
+        self.min_delay = max(self.min_delay, 1.0)
+        self.max_delay = max(self.max_delay, 5.0)

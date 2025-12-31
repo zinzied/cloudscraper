@@ -148,10 +148,24 @@ class IntelligentChallengeDetector:
     def detect_challenge(self, response_text: str, response_headers: Dict[str, str], 
                         status_code: int, url: str, debug: bool = False) -> Optional[Dict[str, Any]]:
         """Detect challenge type from response"""
-        # Check server header first
-        server = response_headers.get('Server', '').lower()
-        if 'cloudflare' not in server:
+        # Check for Cloudflare indicators (Server header, CF-Ray, or keywords in body)
+        headers_lower = {k.lower(): v.lower() for k, v in response_headers.items()}
+        server = headers_lower.get('server', '')
+        is_cloudflare = 'cloudflare' in server or 'cf-ray' in headers_lower
+        
+        if not is_cloudflare:
+            text_lower = response_text.lower()
+            cloudflare_keywords = ['just a moment...', 'window._cf_chl_opt', 'cf-browser-verification']
+            if any(kw in text_lower for kw in cloudflare_keywords):
+                is_cloudflare = True
+
+        if not is_cloudflare:
+            if debug:
+                print(f"DEBUG Challenge: No Cloudflare indicators found in headers or body")
             return None
+        
+        if debug:
+            print(f"DEBUG Challenge: Status {status_code}, Cloudflare detected")
         
         detection_result = None
         max_confidence = 0
@@ -178,17 +192,15 @@ class IntelligentChallengeDetector:
         
         # Fallback for 403/503 from Cloudflare that might be challenges
         if not detection_result and status_code in [403, 503]:
-            text_lower = response_text.lower()
-            if 'just a moment...' in text_lower or 'challenge-platform' in text_lower or 'cf-turnstile' in text_lower:
-                return {
-                    'pattern_id': 'cf_unknown_managed',
-                    'pattern_name': 'Cloudflare Managed Challenge (Unknown)',
-                    'challenge_type': 'managed',
-                    'confidence': 0.8,
-                    'response_strategy': 'browser_simulation',
-                    'status_code': status_code,
-                    'url': url
-                }
+            return {
+                'pattern_id': 'cf_force_browser',
+                'pattern_name': 'Cloudflare High-Security (Forced Browser)',
+                'challenge_type': 'managed',
+                'confidence': 0.7,
+                'response_strategy': 'browser_simulation',
+                'status_code': status_code,
+                'url': url
+            }
 
         # Record detection
         if detection_result:
@@ -572,7 +584,8 @@ class IntelligentChallengeSystem:
             response.text, 
             dict(response.headers), 
             response.status_code, 
-            response.url
+            response.url,
+            debug=self.cloudscraper.debug
         )
         
         if not challenge_info:
@@ -580,8 +593,16 @@ class IntelligentChallengeSystem:
         
         self.performance_metrics['challenges_detected'] += 1
         
-        logging.info(f"Challenge detected: {challenge_info['pattern_name']} "
-                    f"(confidence: {challenge_info['confidence']:.2f})")
+        if self.cloudscraper.debug:
+            print(f"Challenge detected: {challenge_info['pattern_name']} "
+                        f"(confidence: {challenge_info['confidence']:.2f})")
+        
+        # If using hybrid interpreter, we prefer letting the Hybrid Engine handle the solve
+        # rather than the legacy response generator strategies.
+        if getattr(self.cloudscraper, 'interpreter', 'js2py') == 'hybrid':
+            if self.cloudscraper.debug:
+                print("Intelligent Challenge System: Yielding to Hybrid Engine...")
+            return True, None
         
         # Generate response
         challenge_response = self.response_generator.generate_response(

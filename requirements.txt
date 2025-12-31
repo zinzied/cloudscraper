@@ -1,5 +1,5 @@
-# CloudScraper version 3.4.0
-cloudscraper==3.4.0
+# CloudScraper version 4.0.0
+cloudscraper==4.0.0
 
 # Production Dependencies
 requests >= 2.31.0
@@ -10,7 +10,7 @@ pycryptodome >= 3.20.0
 js2py >= 0.74
 brotli >= 1.1.0
 certifi >= 2024.2.2
-ai-urllib4 >= 1.1.2
+ai-urllib4
 
 # Enhanced Features Dependencies
 numpy >= 1.24.0
@@ -42,5 +42,5 @@ PyYAML >= 6.0.0
 # flake8 >= 6.0.0
 
 # Hybrid Engine Dependencies
-tls-chameleon>=1.1.1
-py-parkour>=2.2.0
+tls-chameleon
+py-parkour

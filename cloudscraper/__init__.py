@@ -75,7 +75,7 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.6.1'
+__version__ = '4.0.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -209,6 +209,46 @@ class CloudScraper(Session):
         
         self.interpreter = kwargs.pop('interpreter', 'js2py')  # Default to js2py for better compatibility
 
+        # AI-Urllib4 / Intelligent Request options
+        self.ai_optimize = kwargs.pop('ai_optimize', False)
+        self.learn_from_success = kwargs.pop('learn_from_success', True)
+        self.ai_client = None
+        
+        if self.ai_optimize:
+            try:
+                self.ai_client = ai_urllib4.SmartClient(
+                    ai_optimize=True,
+                    learn_from_success=self.learn_from_success,
+                    adaptive_headers=True,  # Enable adaptive header optimization
+                    domain_memory=True  # Enable domain-specific learning
+                )
+            except (AttributeError, Exception) as e:
+                if self.debug:
+                    print(f"AI-Urllib4 initialization failed: {e}")
+                pass
+
+        # TLS-Chameleon Enhanced Profile options
+        self.tls_profile = kwargs.pop('tls_profile', None)
+        self.tls_randomize = kwargs.pop('randomize', True)
+        self.http2_priority = kwargs.pop('http2_priority', None)
+
+        # Apply tls_profile to impersonate if using curl_cffi/chameleon
+        # Enhanced TLS profile mapping for better Cloudflare bypass
+        if self.tls_profile and 'impersonate' not in kwargs:
+             # Map common profile names to curl_cffi compatible formats
+             profile_mapping = {
+                 'chrome120': 'chrome120',
+                 'chrome119': 'chrome119',
+                 'chrome118': 'chrome118',
+                 'firefox120': 'firefox120',
+                 'safari17_0': 'safari17_0',
+                 'edge120': 'edge120'
+             }
+             mapped_profile = profile_mapping.get(self.tls_profile, self.tls_profile)
+             kwargs['impersonate'] = mapped_profile
+             if self.debug:
+                 print(f"TLS Profile: Using {mapped_profile} for impersonation")
+
         # Request hooks
         self.requestPreHook = kwargs.pop('requestPreHook', None)
         self.requestPostHook = kwargs.pop('requestPostHook', None)
@@ -330,7 +370,9 @@ class CloudScraper(Session):
             'enable_tls_fingerprinting', 'enable_tls_rotation', 'enable_anti_detection',
             'enable_enhanced_spoofing', 'spoofing_consistency_level', 'enable_intelligent_challenges',
             'enable_adaptive_timing', 'behavior_profile', 'enable_ml_optimization',
-            'enable_enhanced_error_handling'
+            'enable_enhanced_error_handling',
+            # New Unified parameters
+            'ai_optimize', 'learn_from_success', 'tls_profile', 'randomize', 'http2_priority'
         ]
         for param in custom_params:
             kwargs.pop(param, None)
@@ -339,6 +381,16 @@ class CloudScraper(Session):
         impersonate_fingerprint = kwargs.pop('impersonate', None)
 
         # Initialize the session
+        # If using TLS-Chameleon, pass the new profile parameters if supported
+        if HAS_CURL_CFFI and self.tls_profile:
+            # Check if ChameleonSession (Session) supports profile/randomize/http2_priority
+            # We pass them in kwargs if they are not popped yet
+            if self.tls_profile:
+                kwargs['profile'] = self.tls_profile
+            kwargs['randomize'] = self.tls_randomize
+            if self.http2_priority:
+                kwargs['http2_priority'] = self.http2_priority
+
         super(CloudScraper, self).__init__(*args, **kwargs)
 
         if HAS_CURL_CFFI:
@@ -591,6 +643,20 @@ class CloudScraper(Session):
         # Start timing for adaptive algorithms
         request_start_time = time.time()
         
+        # AI Header/Pattern Optimization
+        if self.ai_optimize and self.ai_client:
+            try:
+                domain = urlparse(url).netloc
+                ai_insights = self.ai_client.get_domain_insights(domain)
+                if self.debug:
+                    print(f"AI Insights for {domain}: {ai_insights}")
+                
+                # Apply suggested headers or UA from AI
+                if ai_insights.get('best_ua'):
+                    kwargs.setdefault('headers', {})['User-Agent'] = ai_insights['best_ua']
+            except (AttributeError, Exception):
+                pass
+        
         # Apply request throttling to prevent TLS blocking
         self._apply_request_throttling()
 
@@ -710,6 +776,13 @@ class CloudScraper(Session):
                     self.perform_request(method, url, *args, **kwargs)
                 )
 
+                # AI Learning from success/failure
+                if self.ai_optimize and self.ai_client:
+                    try:
+                        self.ai_client.learn_from_response(response)
+                    except (AttributeError, Exception):
+                        pass
+
                 # Report successful proxy use if applicable
                 if kwargs.get('proxies') and hasattr(self, 'proxy_manager'):
                     self.proxy_manager.report_success(kwargs['proxies'])
@@ -805,7 +878,7 @@ class CloudScraper(Session):
                         self._solveDepthCnt += 1
                         if self._solveDepthCnt >= self.solveDepth:
                             if self.debug:
-                                print('⚠️ Maximum solve depth reached, returning original response')
+                                print('WARNING: Maximum solve depth reached, returning original response')
                             return response
 
                         # Retry with modified parameters
@@ -1530,6 +1603,39 @@ class CloudScraper(Session):
         """
         tokens, user_agent = cls.get_tokens(url, **kwargs)
         return '; '.join('='.join(pair) for pair in tokens.items()), user_agent
+
+
+class UnifiedSession(CloudScraper):
+    """
+    The "Dream API" for CloudScraper.
+    A simplified interface that orchestrates all bypass layers:
+    - TLS-Chameleon (Network Fingerprint)
+    - Py-Parkour (Browser Fallback)
+    - AI-Urllib4 (Intelligent Requests)
+    """
+    def __init__(self, *args, **kwargs):
+        # Default Unified configurations
+        kwargs.setdefault('interpreter', 'hybrid')
+        kwargs.setdefault('ai_optimize', True)
+        kwargs.setdefault('enable_stealth', True)
+        kwargs.setdefault('enable_ml_optimization', True)
+        kwargs.setdefault('enable_intelligent_challenges', True)
+        kwargs.setdefault('disableTurnstile', False)
+        kwargs.setdefault('disableCloudflareV2', False)
+        kwargs.setdefault('disableCloudflareV3', False)
+        
+        # Mapping browser_fallback to interpreter='hybrid'
+        browser_fallback = kwargs.pop('browser_fallback', True)
+        if not browser_fallback:
+            kwargs['interpreter'] = 'js2py'
+            
+        super(UnifiedSession, self).__init__(*args, **kwargs)
+
+    def get_domain_insights(self, domain):
+        """Get AI insights for a specific domain if AI-Urllib4 is enabled"""
+        if self.ai_client and hasattr(self.ai_client, 'get_domain_insights'):
+            return self.ai_client.get_domain_insights(domain)
+        return {"status": "AI Optimization not active or insights not available"}
 
 
 # ------------------------------------------------------------------------------- #

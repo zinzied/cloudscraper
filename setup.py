@@ -13,7 +13,7 @@ setup(
     name = 'ai-cloudscraper',
     author='VeNoMouS, Zied Boughdir',
     author_email='venom@venomous.io, zied.boughdir@gmail.com',
-    version='3.6.1',
+    version='4.0.0',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     py_modules = [],
     python_requires='>=3.8',
@@ -53,13 +53,13 @@ setup(
         'js2py >= 0.74',
         'brotli >= 1.1.0',
         'certifi >= 2024.2.2',
-        'ai-urllib4 >= 1.1.2'
+        'ai-urllib4 >= 2.0.0'
     ],
     extras_require={
         'ai': ['ddddocr', 'ultralytics', 'google-generativeai'],
-        'browser': ['playwright'],
-        'hybrid': ['tls-chameleon>=1.1.1', 'py-parkour>=2.2.0'],
-        'all': ['ddddocr', 'ultralytics', 'playwright', 'tls-chameleon>=1.1.1', 'py-parkour>=2.2.0', 'google-generativeai']
+        'browser': ['playwright', 'py-parkour>=3.0.0'],
+        'hybrid': ['tls-chameleon>=2.0.0', 'py-parkour>=3.0.0'],
+        'all': ['ddddocr', 'ultralytics', 'playwright', 'tls-chameleon>=2.0.0', 'py-parkour>=3.0.0', 'google-generativeai']
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
