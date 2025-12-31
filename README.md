@@ -39,7 +39,7 @@ It is a cloud-based, Chromium-powered headless browser cluster that enables deve
 
 ---
 
-# CloudScraper v3.6.1 🚀 - Stability & Parity Update
+# CloudScraper v4.0.0 🚀 - Happy New Year 2026 Edition
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
