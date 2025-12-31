@@ -115,6 +115,53 @@ The Hybrid Engine and AI capabilities are built upon these cutting-edge librarie
 
 ---
 
+## 🔒 **NEW: High-Security Mode** - For Turnstile & Managed Challenges
+
+For the most challenging sites that use **Cloudflare Turnstile Managed Challenges** or **Interactive Browser Verification**, use the dedicated `create_high_security_scraper` factory:
+
+```python
+import cloudscraper
+
+# Method 1: With a Captcha Solving Service (Recommended)
+scraper = cloudscraper.create_high_security_scraper(
+    captcha_provider='2captcha',  # or 'anticaptcha'
+    captcha_api_key='YOUR_2CAPTCHA_API_KEY',
+    debug=True
+)
+
+response = scraper.get("https://example-protected-site.com")
+print(response.status_code)
+scraper.close()
+
+# Method 2: With Residential Proxy (Improved Success Rate)
+scraper = cloudscraper.create_high_security_scraper(
+    captcha_api_key='YOUR_API_KEY',
+    proxy='http://user:pass@residential-proxy.com:port',
+    debug=True
+)
+
+# Method 3: Full Power (Captcha Solver + AI + Proxy)
+scraper = cloudscraper.create_high_security_scraper(
+    captcha_api_key='YOUR_2CAPTCHA_KEY',
+    google_api_key='YOUR_GEMINI_KEY',  # AI fallback for visual CAPTCHAs
+    proxy='http://user:pass@residential-proxy.com:port',
+    debug=True
+)
+```
+
+### What `create_high_security_scraper` Enables:
+| Feature | Setting |
+|---------|---------|
+| **Interpreter** | `hybrid` (Playwright + TLS Chameleon) |
+| **Turnstile Handling** | ✅ Enabled |
+| **Intelligent Challenges** | ✅ Enabled |
+| **External Captcha Solver** | Configured (2captcha, anticaptcha, etc.) |
+| **Stealth Mode** | Maximum (human-like delays, randomized headers) |
+| **Solve Depth** | 5 (allows more retries) |
+
+> **Note:** External captcha solvers like 2captcha charge per solve (~$2-3 per 1000 Turnstile solves). Residential proxies are often necessary for geofenced or IP-blacklisted sites.
+
+
 ## 🚀 **NEW: Phase 1 & 2 - Industrial Strength Bypass** (v3.1.2+)
 
 This version includes **10 production-ready bypass strategies**:

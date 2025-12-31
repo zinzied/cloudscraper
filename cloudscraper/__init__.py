@@ -1547,3 +1547,70 @@ create_scraper = CloudScraper.create_scraper
 session = CloudScraper.create_scraper
 get_tokens = CloudScraper.get_tokens
 get_cookie_string = CloudScraper.get_cookie_string
+
+
+def create_high_security_scraper(captcha_provider='2captcha', captcha_api_key=None, 
+                                  proxy=None, google_api_key=None, debug=False, **kwargs):
+    """
+    Convenience function for creating a CloudScraper configured for maximum bypass efficacy
+    against high-security sites like UNZ.com and BritishNewspaperArchive.co.uk.
+
+    Required Parameters:
+    - captcha_api_key: Your API key for the captcha solving service (2captcha, anticaptcha)
+
+    Optional Parameters:
+    - captcha_provider: '2captcha' (default), 'anticaptcha', or 'deathbycaptcha'
+    - proxy: Residential proxy URL (e.g., 'http://user:pass@host:port')
+    - google_api_key: Google Gemini API key for AI captcha solving fallback
+    - debug: Enable debug logging (default: False)
+
+    Returns a CloudScraper instance configured with:
+    - Hybrid interpreter (Playwright via Py-Parkour)
+    - Intelligent challenge system enabled
+    - Turnstile challenge handling enabled
+    - External captcha solver configured
+    - Maximum stealth settings
+    """
+    captcha_config = {}
+    if captcha_api_key:
+        captcha_config = {
+            'provider': captcha_provider,
+            'api_key': captcha_api_key
+        }
+        if proxy:
+            captcha_config['proxy'] = {'https': proxy, 'http': proxy}
+
+    scraper_config = {
+        'interpreter': 'hybrid',
+        'enable_intelligent_challenges': True,
+        'disableTurnstile': False,  # Enable Turnstile handling
+        'captcha': captcha_config,
+        'debug': debug,
+        'solveDepth': 5,  # Allow more retries for complex challenges
+        'stealth_options': {
+            'min_delay': 1.0,
+            'max_delay': 5.0,
+            'human_like_delays': True,
+            'randomize_headers': True,
+            'browser_quirks': True,
+            'simulate_viewport': True,
+            'behavioral_patterns': True
+        }
+    }
+
+    if google_api_key:
+        scraper_config['google_api_key'] = google_api_key
+
+    # Override with any additional user-provided kwargs
+    scraper_config.update(kwargs)
+
+    scraper = CloudScraper.create_scraper(**scraper_config)
+
+    # Configure proxy if provided
+    if proxy:
+        scraper.proxies = {
+            'http': proxy,
+            'https': proxy
+        }
+
+    return scraper
