@@ -10,7 +10,7 @@ pycryptodome >= 3.20.0
 js2py >= 0.74
 brotli >= 1.1.0
 certifi >= 2024.2.2
-ai-urllib4
+ai-urllib4 >= 2.1.5
 
 # Enhanced Features Dependencies
 numpy >= 1.24.0
@@ -42,5 +42,5 @@ PyYAML >= 6.0.0
 # flake8 >= 6.0.0
 
 # Hybrid Engine Dependencies
-tls-chameleon
-py-parkour
+tls-chameleon >= 2.1.0
+py-parkour >= 3.1.0
