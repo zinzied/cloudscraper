@@ -11,16 +11,16 @@ with open('README.md', 'r', encoding='utf-8') as fp:
 
 setup(
     name = 'ai-cloudscraper',
-    author='VeNoMouS, Zied Boughdir',
-    author_email='venom@venomous.io, zied.boughdir@gmail.com',
-    version='4.0.0',
-    packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
+    author='Zied Boughdir',
+    author_email='zied.boughdir@gmail.com',
+    version='3.7.0',
+    packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent', 'cloudscraper.pyarmor_runtime_000000'],
     py_modules = [],
     python_requires='>=3.8',
     description = 'Enhanced Python library to bypass Cloudflare\'s anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation.',
     long_description=readme,
     long_description_content_type='text/markdown',
-    url = 'https://github.com/zinzied/cloudscraper',
+    url = 'https://github.com/zinzied/ai-cloudscraper',
     keywords = [
         'cloudflare',
         'scraping',

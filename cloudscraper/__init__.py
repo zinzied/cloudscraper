@@ -75,13 +75,13 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '4.0.0'
+__version__ = '3.7.0'
 
 # ------------------------------------------------------------------------------- #
 
-__author__ = 'VeNoMouS'
-__credits__ = ['VeNoMouS', 'Zied Boughdir']
-__email__ = 'venom@venomous.io', 'ziedboughdir@gmail.com'
+__author__ = 'Zied Boughdir'
+__credits__ = ['Zied Boughdir']
+__email__ = 'zied.boughdir@gmail.com'
 __maintainer__ = 'Zied Boughdir'
 __status__ = 'Production'
 

@@ -148,3 +148,15 @@ Thumbs.db
 test_*.py
 *_test.py
 debug_*.py
+
+# Backups
+cloudscraper/trust_builder.py.bak
+*.bak
+*.tmp
+
+# Secrets
+.pypirc
+*.env
+secrets.json
+credentials.json
+verification_log.txt

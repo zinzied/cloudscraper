@@ -1,45 +1,8 @@
 <div align="center">
-<a href="https://www.scrapeless.com/en/product/scraping-browser?utm_source=github&utm_medium=cloudscraper_readme" target="_blank">
-<img src="https://github.com/scrapeless-ai/.github/raw/main/profile/images/scrapeless-dark.png" alt="Scrapeless Scraping Browser" width="100%">
-</a>
+<img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-<div align="center">
-
-[![Scrapeless Scraping Browser](https://img.shields.io/badge/Scrapeless-Scraping%20Browser-blue?logo=google-chrome&logoColor=white)](https://www.scrapeless.com/en/product/scraping-browser?utm_source=github&utm_medium=cloudscraper_readme)
-[![PyPI version](https://badge.fury.io/py/cloudscraper.svg)](https://badge.fury.io/py/cloudscraper)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python versions](https://img.shields.io/pypi/pyversions/cloudscraper.svg)](https://pypi.org/project/cloudscraper/)
-
-
-</div>
-
----
-
-## 🔍 **[Looking for Advanced Browser Automation?](https://www.scrapeless.com/en)**
-
-If you are looking for a solution focused on browser automation and anti-detection mechanisms, I recommend **[Scrapeless Browser](https://www.scrapeless.com/en)**.
-
-It is a cloud-based, Chromium-powered headless browser cluster that enables developers to run large-scale concurrent browser instances and handle complex interactions on protected pages. Perfect for AI infrastructure, web automation, data scraping, page rendering, and automated testing.
-
-**[The Scrapeless Browser](https://www.scrapeless.com/en)** provides a secure, isolated browser environment that allows you to interact with web applications while minimizing potential risks to your system.
-
-### ✨ **Key Features**
-
-- **🚀 Out-of-the-Box Ready**: Natively compatible with Puppeteer and Playwright, supporting CDP connections. Migrate your projects with just one line of code.
-- **🌍 Global IP Resources**: Covers residential IPs, static ISP IPs, and unlimited IPs across 195 countries. Transparent costs ($0.6–$1.8/GB, far lower than Browserbase) with support for custom browser proxies.
-- **🔒 Bulk Isolated Environment Creation**: Each profile corresponds to an exclusive browser environment, enabling persistent login and identity isolation.
-- **⚡ Unlimited Concurrent Scaling**: A single task supports second-level launch of 50 to 1000+ browser instances. Auto-scaling is available with no server resource limits.
-- **🌐 Edge Node Service (ENS)** – Multiple nodes worldwide, offering 2–3× faster launch speed and higher stability than other cloud browsers.
-- **🎭 Flexible Fingerprint Customization**: Generate random fingerprints or customize fingerprint parameters as needed.
-- **🔍 Visual Debugging**: Perform interactive debugging and real-time monitoring of proxy traffic through Live View, and quickly pinpoint issues and optimize actions by replaying sessions page by page with Session Recordings.
-- **🏢 Enterprise Customization**: Undertake customization of enterprise-level automation projects and AI Agent customization.
-
-👉 **Learn more**: [Scrapeless Scraping Browser Playground](https://playground.scrapeless.com/) | [Documentation](https://docs.scrapeless.com/)
-
----
-
-# CloudScraper v4.0.0 🚀 - Happy New Year 2026 Edition
+# CloudScraper v3.7.0 🚀 - Happy New Year 2026 Edition
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -161,6 +124,43 @@ scraper = cloudscraper.create_high_security_scraper(
 
 > **Note:** External captcha solvers like 2captcha charge per solve (~$2-3 per 1000 Turnstile solves). Residential proxies are often necessary for geofenced or IP-blacklisted sites.
 
+
+## 👑 **BOSS MODE: Bypassing the "Unbypassable"**
+
+For sites with aggressive browser-engine profiling, standard methods will fail. Use the **Trust Builder "Boss Mode"** combo:
+
+### The Winners Combo:
+1. 🌐 **Clean IP**: Use a high-quality residential proxy or VPN.
+2. 🎭 **Identity Masking**: Use the `disguise=True` parameter to swap browser hardware DNA.
+3. 👁️ **AI Vision**: Enabled by default in `warm_get`, it "sees" the challenge visually.
+
+```python
+from cloudscraper.trust_builder import warm_get
+
+# The Boss Level Bypass
+response = warm_get(
+    "https://high-security-site.com/protected/",
+    disguise=True,       # 🎭 Swaps hardware signatures
+    depth=5,             # 🌡️ High warmth (5 pages visited first)
+    debug=True           # 🔍 See the AI at work
+)
+
+if response.status_code == 200:
+    print("Boss defeated! 🏆")
+    print(f"Extracted {len(response.cookies)} clearance cookies.")
+```
+
+### Trust Builder Parameters:
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `url` | Required | The target "Boss" website URL. |
+| `proxy` | `None` | **New:** SOCKS/HTTP proxy URL (e.g., `http://user:pass@host:port`). |
+| `disguise` | `False` | **CRITICAL for Boss sites.** Generates a unique hardware/software identity. |
+| `depth` | `3` | Number of "organic" pages to visit before the target to build trust. |
+| `headless` | `True` | Set to `False` to watch the AI Vision solve the challenge in real-time. |
+| `debug` | `False` | Detailed logging of Ghost Cursor and AI Vision actions. |
+
+> **Pro Tip:** If a site is still blocking you with a 403, your IP is likely flagged. Change your VPN server and try again with `disguise=True`.
 
 ## 🚀 **NEW: Phase 1 & 2 - Industrial Strength Bypass** (v3.1.2+)
 
