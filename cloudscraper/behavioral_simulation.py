@@ -453,3 +453,53 @@ class InteractionSimulator:
             score += 0.1
         
         return min(score, 1.0)
+
+    def perform_human_interaction(self, page):
+        """Perform a random human-like interaction on a Playwright page (sync)"""
+        choice = random.random()
+        
+        if choice < 0.6:
+            # Mouse movement
+            x, y = random.randint(100, 700), random.randint(100, 500)
+            page.mouse.move(x, y, steps=random.randint(5, 15))
+        elif choice < 0.8:
+            # Scroll
+            delta = random.randint(100, 400)
+            if random.random() < 0.3: delta = -delta # Some backscroll
+            page.mouse.wheel(0, delta)
+        elif choice < 0.9:
+            # Click
+            x, y = random.randint(100, 700), random.randint(100, 500)
+            page.mouse.click(x, y)
+        else:
+            # Subtle jitter
+            page.mouse.move(
+                page.mouse._impl._x + random.randint(-5, 5),
+                page.mouse._impl._y + random.randint(-5, 5),
+                steps=2
+            )
+
+    async def perform_human_interaction_async(self, page):
+        """Perform a random human-like interaction on a Playwright page (async)"""
+        choice = random.random()
+        
+        if choice < 0.6:
+            # Mouse movement
+            x, y = random.randint(100, 700), random.randint(100, 500)
+            await page.mouse.move(x, y, steps=random.randint(5, 15))
+        elif choice < 0.8:
+            # Scroll
+            delta = random.randint(100, 400)
+            if random.random() < 0.3: delta = -delta
+            await page.mouse.wheel(0, delta)
+        elif choice < 0.9:
+            # Click
+            x, y = random.randint(100, 700), random.randint(100, 500)
+            await page.mouse.click(x, y)
+        else:
+            # Subtle jitter - using internal state might be risky for async, let's just move slightly
+            await page.mouse.move(
+                random.randint(0, 800),
+                random.randint(0, 600),
+                steps=5
+            )

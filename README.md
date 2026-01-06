@@ -63,6 +63,8 @@ The **Hybrid Engine** is a game-changer that combines two powerful technologies:
 - **🤖 AI Captcha Solver**: Solves reCAPTCHA v2 using Google Gemini Vision
 - **🔐 TLS Fingerprinting**: JA3 fingerprint rotation with real browser signatures (Chrome, Firefox, Safari) via `tls-chameleon`
 - **🕵️ Traffic Pattern Obfuscation**: Intelligent request spacing and behavioral consistency
+- **🛡️ Advanced Automation Bypass**: Cutting-edge techniques to mask Playwright/Chromium indicators (navigator.webdriver, chrome runtime, etc.)
+- **🖱️ Human-like Behavioral Patterns**: Integrated mouse movements, scrolling, and interaction simulation for browser-based challenges
 - **🧠 Intelligent Challenge Detection**: AI-powered challenge recognition
 - **⚡ Async Support**: Check `async_cloudscraper` for non-blocking operations
 
@@ -120,6 +122,8 @@ scraper = cloudscraper.create_high_security_scraper(
 | **Intelligent Challenges** | ✅ Enabled |
 | **External Captcha Solver** | Configured (2captcha, anticaptcha, etc.) |
 | **Stealth Mode** | Maximum (human-like delays, randomized headers) |
+| **Advanced Stealth** | ✅ Enabled (`navigator.webdriver` masking) |
+| **Behavioral Simulation** | ✅ Enabled (Mouse/Scroll interaction) |
 | **Solve Depth** | 5 (allows more retries) |
 
 > **Note:** External captcha solvers like 2captcha charge per solve (~$2-3 per 1000 Turnstile solves). Residential proxies are often necessary for geofenced or IP-blacklisted sites.
@@ -622,6 +626,8 @@ response = scraper.get("https://example.com")
 | `behavior_profile` | string | 'casual' | Timing profile ('casual', 'focused', 'research', 'mobile') |
 | `enable_ml_optimization` | boolean | True | Enable ML-based bypass optimization |
 | `enable_enhanced_error_handling` | boolean | True | Enable intelligent error recovery |
+| `advanced_stealth` | boolean | True | Enable deep automation bypass (Playwright only) |
+| `behavioral_patterns` | boolean | True | Enable human interaction simulation (Playwright only) |
 | `compatibility_mode` | boolean | False | Disable all 3.6.x overhead for 3.1.x performance |
 
 ### 🎭 **Enhanced Stealth Options**

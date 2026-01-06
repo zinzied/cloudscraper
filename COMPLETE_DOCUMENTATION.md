@@ -91,6 +91,8 @@ pip install ai-cloudscraper[ai,browser,hybrid]
 | `solveDepth` | int | `3` | Maximum challenge solving recursion depth |
 | `allow_brotli` | bool | `True` | Enable Brotli compression support |
 | `compatibility_mode` | bool | `False` | Disable all v3.6+ overhead for max speed |
+| `advanced_stealth` | bool | `True` | Deep automation bypass (Playwright only) |
+| `behavioral_patterns` | bool | `True` | Human interaction simulation (Playwright only) |
 
 ```python
 # Example: Basic configuration
@@ -280,6 +282,7 @@ scraper = cloudscraper.create_high_security_scraper(
 | `browser_quirks` | bool | `True` | Add browser-specific behaviors |
 | `simulate_viewport` | bool | `True` | Simulate viewport changes |
 | `behavioral_patterns` | bool | `True` | Mimic human browsing patterns |
+| `advanced_stealth` | bool | `True` | Mask automation fingerprints |
 
 ```python
 # Full stealth configuration

@@ -15,8 +15,10 @@ This document describes the comprehensive enhancements made to CloudScraper to b
 6. **Enhanced WebGL & Canvas Spoofing** - Coordinated fingerprint generation
 7. **Request Signing & Payload Obfuscation** - Advanced request manipulation
 8. **ML-Based Bypass Optimization** - Learning from success/failure patterns
-9. **Comprehensive Testing Framework** - Full test coverage for all features
-10. **Enhanced Error Handling** - Sophisticated retry and recovery mechanisms
+9. **Automation Bypass** - Masking Playwright/Chromium indicators
+10. **Behavioral Patterns** - Integrated mouse/scroll simulation
+11. **Comprehensive Testing Framework** - Full test coverage for all features
+12. **Enhanced Error Handling** - Sophisticated retry and recovery mechanisms
 
 ## � Free vs. Paid Features
 
@@ -329,6 +331,25 @@ scraper = cloudscraper.create_scraper(
 # Enable maximum stealth mode
 scraper.enable_maximum_stealth()
 ```
+
+### 9. Advanced Automation Bypass (`stealth.py`)
+
+**Purpose**: Evade browser-engine profiling by masking automation-specific indicators.
+
+**Features**:
+- **Argument Injection**: Comprehensive list of Chromium switches (e.g., `--disable-blink-features=AutomationControlled`).
+- **Dynamic Masking**: Injects JavaScript to spoof `navigator.webdriver`, `chrome.runtime`, and permission APIs.
+- **Leak Prevention**: Disables background networking and telemetry flags that signal automation.
+
+### 10. Behavioral Pattern Simulation (`behavioral_simulation.py`)
+
+**Purpose**: Mimic human-like interaction patterns to bypass behavioral analysis.
+
+**Features**:
+- **Interaction Hook**: Integrated directly into Playwright solve loops.
+- **Realistic Movements**: Bezier-curve based mouse movements with jitter and natural delays.
+- **Natural Scrolling**: Simulates reading patterns (variable speed, back-scrolling).
+- **Sync & Async Support**: Works across all Playwright bypass modes.
 
 ## 📊 Monitoring and Statistics
 
