@@ -149,7 +149,8 @@ test_*.py
 *_test.py
 debug_*.py
 
-# Backups
+# Logic Protection
+cloudscraper/trust_builder.py
 cloudscraper/trust_builder.py.bak
 *.bak
 *.tmp
