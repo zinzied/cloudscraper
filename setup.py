@@ -3,10 +3,16 @@ import re
 from setuptools import setup, Extension
 try:
     from Cython.Build import cythonize
+    import platform
+    # Check if we have a compiler (very basic check)
+    HAS_COMPILER = True
+    if platform.system() == 'Windows':
+        # Just a hint, building wheels usually happens in a controlled env
+        pass
 except ImportError:
-    # Fallback for environments without Cython (though we require it for building)
+    HAS_COMPILER = False
     def cythonize(extensions, **kwargs):
-        return extensions
+        return []
 from io import open
 
 with open(os.path.join(os.path.dirname(__file__), 'cloudscraper', '__init__.py'), 'r', encoding='utf-8') as fp:
@@ -19,13 +25,11 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zied.boughdir@gmail.com',
-    version='3.7.2',
+    version='3.7.3',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
-    ext_modules = [] if os.environ.get('SKIP_CYTHON') else cythonize([
-        Extension("cloudscraper.trust_builder", [
-            "cloudscraper/trust_builder.c" if os.path.exists("cloudscraper/trust_builder.c") else "cloudscraper/trust_builder.py"
-        ])
-    ], compiler_directives={'language_level': "3"}, quiet=True),
+    ext_modules = cythonize([
+        Extension("cloudscraper.trust_builder", ["cloudscraper/trust_builder.py"])
+    ], compiler_directives={'language_level': "3"}, quiet=True) if (HAS_COMPILER and not os.environ.get('SKIP_CYTHON')) else [],
     py_modules = [],
     python_requires='>=3.8',
     description = 'Enhanced Python library to bypass Cloudflare\'s anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation.',
