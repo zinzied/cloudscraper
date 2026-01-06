@@ -3,5 +3,3 @@ include README.md
 include LICENSE
 include COMPLETE_DOCUMENTATION.md
 recursive-include cloudscraper *.py *.json
-include cloudscraper/trust_builder.c
-exclude cloudscraper/trust_builder.py

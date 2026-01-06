@@ -25,11 +25,9 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zied.boughdir@gmail.com',
-    version='3.7.4',
+    version='3.7.5',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
-    ext_modules = cythonize([
-        Extension("cloudscraper.trust_builder", ["cloudscraper/trust_builder.py"])
-    ], compiler_directives={'language_level': "3"}, quiet=True) if (HAS_COMPILER and not os.environ.get('SKIP_CYTHON')) else [],
+    ext_modules = [],  # No Cython compilation needed
     py_modules = [],
     python_requires='>=3.8',
     description = 'Enhanced Python library to bypass Cloudflare\'s anti-bot protection with cutting-edge anti-detection technologies, including TLS fingerprinting, ML optimization, and behavioral simulation.',
