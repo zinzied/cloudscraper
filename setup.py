@@ -25,7 +25,7 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zied.boughdir@gmail.com',
-    version='3.7.3',
+    version='3.7.4',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     ext_modules = cythonize([
         Extension("cloudscraper.trust_builder", ["cloudscraper/trust_builder.py"])
