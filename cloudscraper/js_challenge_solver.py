@@ -9,6 +9,7 @@ Cloudflare challenges that require browser-like JavaScript execution.
 import os
 import json
 import subprocess
+import sys
 import tempfile
 import time
 import hashlib
@@ -16,6 +17,12 @@ import random
 from typing import Dict, Any, Optional, List, Tuple
 from urllib.parse import urlparse, urljoin
 import requests
+
+# Windows-specific flag to hide console window when spawning Node.js
+# This prevents console flash in PyInstaller --noconsole builds
+_SUBPROCESS_FLAGS = 0
+if sys.platform == 'win32':
+    _SUBPROCESS_FLAGS = subprocess.CREATE_NO_WINDOW
 
 
 class JavaScriptEngine:
@@ -29,7 +36,8 @@ class JavaScriptEngine:
         """Check if Node.js is available"""
         try:
             result = subprocess.run(['node', '--version'], 
-                                  capture_output=True, text=True, timeout=5)
+                                  capture_output=True, text=True, timeout=5,
+                                  creationflags=_SUBPROCESS_FLAGS)
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
@@ -79,7 +87,8 @@ class JavaScriptEngine:
         try:
             # Execute the JavaScript
             result = subprocess.run(['node', js_file], 
-                                  capture_output=True, text=True, timeout=self.timeout)
+                                  capture_output=True, text=True, timeout=self.timeout,
+                                  creationflags=_SUBPROCESS_FLAGS)
             
             if result.returncode == 0:
                 try:

@@ -6,6 +6,15 @@ from . import JavaScriptInterpreter
 from .encapsulated import template
 
 # ------------------------------------------------------------------------------- #
+# Windows-specific flag to hide console window when spawning Node.js
+# This prevents console flash in PyInstaller --noconsole builds
+# ------------------------------------------------------------------------------- #
+
+_SUBPROCESS_FLAGS = 0
+if sys.platform == 'win32':
+    _SUBPROCESS_FLAGS = subprocess.CREATE_NO_WINDOW
+
+# ------------------------------------------------------------------------------- #
 
 
 class ChallengeInterpreter(JavaScriptInterpreter):
@@ -27,7 +36,7 @@ class ChallengeInterpreter(JavaScriptInterpreter):
                  'process.stdout.write(String(answer));' \
                  % base64.b64encode(template(body, domain).encode('UTF-8')).decode('ascii')
 
-            return subprocess.check_output(['node', '-e', js])
+            return subprocess.check_output(['node', '-e', js], creationflags=_SUBPROCESS_FLAGS)
 
         except OSError as e:
             if e.errno == 2:
