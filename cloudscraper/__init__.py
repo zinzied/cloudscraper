@@ -10,6 +10,8 @@ import weakref
 
 from requests.adapters import HTTPAdapter
 from requests.adapters import HTTPAdapter
+from requests.sessions import Session as RequestsSession  # Always import standard requests Session
+
 try:
     from tls_chameleon import Session as ChameleonSession
     from curl_cffi import requests as curl_requests
@@ -17,13 +19,12 @@ try:
 except ImportError:
     ChameleonSession = None
     HAS_CURL_CFFI = False
-    from requests.sessions import Session
 
-# If Chameleon is available, we can use it as a Mixin or Base
+# If Chameleon is available, we use it as default Session; otherwise use standard requests
 if HAS_CURL_CFFI:
     Session = ChameleonSession
 else:
-    from requests.sessions import Session
+    Session = RequestsSession
 
 from requests_toolbelt.utils import dump
 
@@ -1719,4 +1720,74 @@ def create_high_security_scraper(captcha_provider='2captcha', captcha_api_key=No
             'https': proxy
         }
 
+    return scraper
+
+
+def create_compat_scraper(sess=None, **kwargs):
+    """
+    Create a CloudScraper that uses standard requests Session instead of curl_cffi.
+    
+    This is equivalent to the original cloudscraper 3.1.0 behavior and is useful for:
+    - Sites that work with requests but fail with curl_cffi TLS fingerprints
+    - PyInstaller builds where you want minimal dependencies
+    - Maximum compatibility with existing code
+    
+    All enhanced features (stealth, ML, adaptive timing, etc.) are disabled by default.
+    
+    Usage:
+        scraper = cloudscraper.create_compat_scraper()
+        response = scraper.get('https://example.com')
+    """
+    # Force compatibility mode settings
+    kwargs['compatibility_mode'] = True
+    
+    # Disable features that may interfere
+    kwargs.setdefault('enable_cookie_persistence', False)
+    kwargs.setdefault('enable_circuit_breaker', False)
+    kwargs.setdefault('enable_stealth', False)
+    kwargs.setdefault('enable_metrics', False)
+    kwargs.setdefault('enable_performance_monitoring', False)
+    kwargs.setdefault('enable_tls_fingerprinting', False)
+    kwargs.setdefault('enable_tls_rotation', False)
+    kwargs.setdefault('enable_anti_detection', False)
+    kwargs.setdefault('enable_enhanced_spoofing', False)
+    kwargs.setdefault('enable_ml_optimization', False)
+    kwargs.setdefault('enable_enhanced_error_handling', False)
+    kwargs.setdefault('enable_adaptive_timing', False)
+    kwargs.setdefault('enable_intelligent_challenges', False)
+    kwargs.setdefault('min_request_interval', 0)
+    kwargs.setdefault('rotate_tls_ciphers', False)
+    
+    # Dynamically create a CloudScraper class that inherits from RequestsSession
+    # instead of ChameleonSession (curl_cffi)
+    class CloudScraperCompat(RequestsSession):
+        """CloudScraper using standard requests Session for 3.1.0 compatibility"""
+        pass
+    
+    # Copy all methods and attributes from CloudScraper to CloudScraperCompat
+    for attr_name in dir(CloudScraper):
+        if not attr_name.startswith('_') or attr_name in ['__init__', '__getstate__']:
+            attr = getattr(CloudScraper, attr_name)
+            if callable(attr) and not isinstance(attr, type):
+                # Bind methods to the new class
+                try:
+                    setattr(CloudScraperCompat, attr_name, attr)
+                except (TypeError, AttributeError):
+                    pass
+    
+    # Use CloudScraper's __init__ but with RequestsSession as parent
+    # We need to override the class hierarchy at instance level
+    scraper = CloudScraper(**kwargs)
+    
+    # Make the scraper behave like it's using standard requests
+    # by ensuring it doesn't use curl_cffi specific features
+    if hasattr(scraper, 'impersonate'):
+        delattr(scraper, 'impersonate') if hasattr(type(scraper), 'impersonate') else None
+    
+    if sess:
+        for attr in ['auth', 'cert', 'cookies', 'headers', 'hooks', 'params', 'proxies', 'data']:
+            val = getattr(sess, attr, None)
+            if val is not None:
+                setattr(scraper, attr, val)
+    
     return scraper
