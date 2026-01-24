@@ -2,7 +2,7 @@
 <img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-# CloudScraper v3.7.5 🚀 - Happy New Year 2026 Edition
+# CloudScraper v3.7.7 🚀 - Happy New Year 2026 Edition
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
