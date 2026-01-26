@@ -120,8 +120,10 @@ class CipherSuiteAdapter(HTTPAdapter):
 
         # Check if SSL context attribute exists before setting
         if hasattr(self.ssl_context, 'wrap_socket'):
-            self.ssl_context.orig_wrap_socket = self.ssl_context.wrap_socket
-            self.ssl_context.wrap_socket = self.wrap_socket
+            # Avoid redundant patching that causes RecursionError
+            if not hasattr(self.ssl_context, 'orig_wrap_socket'):
+                self.ssl_context.orig_wrap_socket = self.ssl_context.wrap_socket
+                self.ssl_context.wrap_socket = self.wrap_socket
 
             if self.server_hostname:
                 # Store server hostname in a custom attribute
@@ -288,6 +290,9 @@ class CloudScraper(Session):
         self._is_refreshing = False  # Guard against recursive session refresh
         self._request_depth = 0  # Guard against recursive request calls
         self._max_request_depth = 10  # Maximum allowed recursion depth
+
+        # Track current SSL context to avoid redundant mounts
+        self._current_ssl_context = None
 
         # Request throttling and TLS management
         self.last_request_time = 0
@@ -664,11 +669,13 @@ class CloudScraper(Session):
         # Rotate TLS cipher suites to avoid detection
         if self.rotate_tls_ciphers and self.tls_fingerprinting_manager and not HAS_CURL_CFFI:
             ssl_context = self.tls_fingerprinting_manager.get_ssl_context()
-            # Update the HTTPS adapter with new SSL context
-            self.mount('https://', CipherSuiteAdapter(
-                ssl_context=ssl_context,
-                source_address=self.source_address
-            ))
+            # Update the HTTPS adapter with new SSL context only if it changed
+            if ssl_context != self._current_ssl_context:
+                self.mount('https://', CipherSuiteAdapter(
+                    ssl_context=ssl_context,
+                    source_address=self.source_address
+                ))
+                self._current_ssl_context = ssl_context
         elif self.rotate_tls_ciphers and not HAS_CURL_CFFI:
             self._rotate_tls_cipher_suite()
 
