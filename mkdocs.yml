@@ -1,0 +1,50 @@
+site_name: CloudScraper AI
+site_url: https://github.com/zinzied/ai-cloudscraper
+repo_url: https://github.com/zinzied/ai-cloudscraper
+repo_name: zinzied/ai-cloudscraper
+site_description: The ultimate Cloudflare bypass library with AI capability.
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: teal
+      accent: lime
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Advanced Usage: advanced-usage.md
+  - Real-World Examples: examples.md
+  - API Reference: api.md
