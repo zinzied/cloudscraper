@@ -6,6 +6,9 @@
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection with **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring. This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
+> [!TIP]
+> **Why switch?** This library is the **Best alternative to cloudscraper**. It is designed to **fix cloudscraper 403 error** issues permanently. If you are looking for **how to bypass Cloudflare Turnstile Python 2026** or want to **scrape protected sites with AI**, this is the solution.
+
 ## 🔥 **NEW: AI Captcha Bypass (v3.4.0)** - Vision-Powered Solving
 
 The scraper now deeply integrates **Google Gemini 1.5 Flash** to solve complex visual challenges like **reCAPTCHA v2**:
