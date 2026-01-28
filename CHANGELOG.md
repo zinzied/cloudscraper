@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.7.9] - 2026-01-28
+- **Metadata Update**: Updated author and maintainer contact information.
+- **Documentation**: Overhauled README.md with clearer value propositions, new badges, and ethical usage guidelines.
+- **PyPI Visibility**: Added project URLs for better discoverability on PyPI.
+
 ## [3.6.1] - 2025-12-30
 - **Added `compatibility_mode` parameter**: Enable with `create_scraper(compatibility_mode=True)` to achieve 3.1.x performance parity (disables all 3.6.x background metrics/stealth features).
 - **Fixed critical socket leaks**: Resolved circular references using `weakref` and added explicit `close()` method for resource cleanup.

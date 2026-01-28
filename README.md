@@ -2,7 +2,7 @@
 <img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-# CloudScraper v3.7.8 🚀
+# CloudScraper v3.7.9 🚀
 ### The Ultimate Cloudflare Bypass for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/ai-cloudscraper.svg?style=flat-square)](https://pypi.org/project/ai-cloudscraper/)
