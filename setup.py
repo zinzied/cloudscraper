@@ -25,7 +25,7 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zinzied@gmail.com',
-    version='3.7.9',
+    version='3.8.0',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     ext_modules = [],  # No Cython compilation needed
     py_modules = [],
@@ -77,8 +77,8 @@ setup(
     extras_require={
         'ai': ['ddddocr', 'ultralytics', 'google-generativeai'],
         'browser': ['playwright', 'py-parkour>=3.0.0'],
-        'hybrid': ['tls-chameleon>=2.0.0', 'py-parkour>=3.0.0'],
-        'all': ['ddddocr', 'ultralytics', 'playwright', 'tls-chameleon>=2.0.0', 'py-parkour>=3.0.0', 'google-generativeai']
+        'hybrid': ['py-parkour>=3.0.0'],
+        'all': ['ddddocr', 'ultralytics', 'playwright', 'py-parkour>=3.0.0', 'google-generativeai']
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',

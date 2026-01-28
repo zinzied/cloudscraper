@@ -43,6 +43,5 @@ es
 # black >= 23.0.0
 # flake8 >= 6.0.0
 
-# Hybrid Engine Dependencies
-tls-chameleon >= 2.1.0
+
 py-parkour >= 3.1.0

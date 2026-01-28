@@ -12,19 +12,20 @@ from requests.adapters import HTTPAdapter
 from requests.adapters import HTTPAdapter
 from requests.sessions import Session as RequestsSession  # Always import standard requests Session
 
-try:
-    from tls_chameleon import Session as ChameleonSession
-    from curl_cffi import requests as curl_requests
-    HAS_CURL_CFFI = True
-except ImportError:
-    ChameleonSession = None
-    HAS_CURL_CFFI = False
+# try:
+#     from tls_chameleon import Session as ChameleonSession
+#     from curl_cffi import requests as curl_requests
+#     HAS_CURL_CFFI = True
+# except ImportError:
+#     ChameleonSession = None
+#     HAS_CURL_CFFI = False
+#
+# # Force disable for stability/compatibility with HathiTrust
+HAS_CURL_CFFI = False
+ChameleonSession = None
 
-# If Chameleon is available, we use it as default Session; otherwise use standard requests
-if HAS_CURL_CFFI:
-    Session = ChameleonSession
-else:
-    Session = RequestsSession
+# Always use standard requests Session
+Session = RequestsSession
 
 from requests_toolbelt.utils import dump
 
@@ -76,7 +77,7 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.7.9'
+__version__ = '3.8.0'
 
 # ------------------------------------------------------------------------------- #
 
@@ -170,7 +171,7 @@ class CipherSuiteAdapter(HTTPAdapter):
 # ------------------------------------------------------------------------------- #
 
 
-class CloudScraper(Session):
+class CloudScraperMixin(object):
 
     def __init__(self, *args, **kwargs):
         self.debug = kwargs.pop('debug', False)
@@ -388,16 +389,9 @@ class CloudScraper(Session):
 
         # Initialize the session
         # If using TLS-Chameleon, pass the new profile parameters if supported
-        if HAS_CURL_CFFI and self.tls_profile:
-            # Check if ChameleonSession (Session) supports profile/randomize/http2_priority
-            # We pass them in kwargs if they are not popped yet
-            if self.tls_profile:
-                kwargs['profile'] = self.tls_profile
-            kwargs['randomize'] = self.tls_randomize
-            if self.http2_priority:
-                kwargs['http2_priority'] = self.http2_priority
 
-        super(CloudScraper, self).__init__(*args, **kwargs)
+
+        super(CloudScraperMixin, self).__init__(*args, **kwargs)
 
         if HAS_CURL_CFFI:
              # Set fingerprint (default to chrome120 if not provided, to fix ios17_0 issues)
@@ -429,7 +423,10 @@ class CloudScraper(Session):
 
         # Mount the HTTPS adapter with our custom cipher suite
         # ONLY if we are NOT using curl_cffi (which handles TLS natively)
-        if not HAS_CURL_CFFI:
+        # Check if we are using the ChameleonSession class
+        uses_chameleon = HAS_CURL_CFFI and isinstance(self, ChameleonSession)
+        
+        if not uses_chameleon:
             self.mount(
                 'https://',
                 CipherSuiteAdapter(
@@ -560,7 +557,7 @@ class CloudScraper(Session):
         self.performance_monitor = None
         
         # Close the actual requests.Session
-        super(CloudScraper, self).close()
+        super(CloudScraperMixin, self).close()
 
     # ------------------------------------------------------------------------------- #
     # Allow us to pickle our session back with all variables
@@ -574,7 +571,7 @@ class CloudScraper(Session):
     # ------------------------------------------------------------------------------- #
 
     def perform_request(self, method, url, *args, **kwargs):
-        return super(CloudScraper, self).request(method, url, *args, **kwargs)
+        return super(CloudScraperMixin, self).request(method, url, *args, **kwargs)
 
     # ------------------------------------------------------------------------------- #
     # Raise an Exception with no stacktrace and reset depth counter.
@@ -637,7 +634,10 @@ class CloudScraper(Session):
             raise RecursionError(f'Maximum request depth ({self._max_request_depth}) exceeded for {url}')
         
         # Default to stable fingerprint for curl_cffi if not specified (fix ios17_0 issue)
-        if HAS_CURL_CFFI and 'impersonate' not in kwargs:
+        # ONLY if we are using the ChameleonSession
+        is_chameleon = HAS_CURL_CFFI and isinstance(self, ChameleonSession)
+        
+        if is_chameleon and 'impersonate' not in kwargs:
             kwargs['impersonate'] = getattr(self, 'impersonate', 'chrome120')
 
         try:
@@ -1121,11 +1121,11 @@ class CloudScraper(Session):
                     # Make a lightweight request to trigger challenge solving
                     # Use a simple HEAD request first to avoid heavy content
                     try:
-                        test_response = super(CloudScraper, self).head(base_url, timeout=10)
+                        test_response = super(CloudScraperMixin, self).head(base_url, timeout=10)
                         status_code = test_response.status_code
                     except:
                         # If HEAD fails, try GET with stream=True to avoid loading content
-                        test_response = super(CloudScraper, self).get(base_url, timeout=10, stream=True)
+                        test_response = super(CloudScraperMixin, self).get(base_url, timeout=10, stream=True)
                         status_code = test_response.status_code
                         # Close the stream immediately to avoid memory issues
                         test_response.close()
@@ -1613,6 +1613,20 @@ class CloudScraper(Session):
         return '; '.join('='.join(pair) for pair in tokens.items()), user_agent
 
 
+
+# ------------------------------------------------------------------------------- #
+# Define the actual CloudScraper class using Mixin pattern
+# ------------------------------------------------------------------------------- #
+
+class CloudScraper(CloudScraperMixin, Session):
+    """
+    Standard CloudScraper session. 
+    Inherits from Session (ChameleonSession if available, else RequestsSession).
+    """
+    pass
+
+
+
 class UnifiedSession(CloudScraper):
     """
     The "Dream API" for CloudScraper.
@@ -1730,71 +1744,4 @@ def create_high_security_scraper(captcha_provider='2captcha', captcha_api_key=No
     return scraper
 
 
-def create_compat_scraper(sess=None, **kwargs):
-    """
-    Create a CloudScraper that uses standard requests Session instead of curl_cffi.
-    
-    This is equivalent to the original cloudscraper 3.1.0 behavior and is useful for:
-    - Sites that work with requests but fail with curl_cffi TLS fingerprints
-    - PyInstaller builds where you want minimal dependencies
-    - Maximum compatibility with existing code
-    
-    All enhanced features (stealth, ML, adaptive timing, etc.) are disabled by default.
-    
-    Usage:
-        scraper = cloudscraper.create_compat_scraper()
-        response = scraper.get('https://example.com')
-    """
-    # Force compatibility mode settings
-    kwargs['compatibility_mode'] = True
-    
-    # Disable features that may interfere
-    kwargs.setdefault('enable_cookie_persistence', False)
-    kwargs.setdefault('enable_circuit_breaker', False)
-    kwargs.setdefault('enable_stealth', False)
-    kwargs.setdefault('enable_metrics', False)
-    kwargs.setdefault('enable_performance_monitoring', False)
-    kwargs.setdefault('enable_tls_fingerprinting', False)
-    kwargs.setdefault('enable_tls_rotation', False)
-    kwargs.setdefault('enable_anti_detection', False)
-    kwargs.setdefault('enable_enhanced_spoofing', False)
-    kwargs.setdefault('enable_ml_optimization', False)
-    kwargs.setdefault('enable_enhanced_error_handling', False)
-    kwargs.setdefault('enable_adaptive_timing', False)
-    kwargs.setdefault('enable_intelligent_challenges', False)
-    kwargs.setdefault('min_request_interval', 0)
-    kwargs.setdefault('rotate_tls_ciphers', False)
-    
-    # Dynamically create a CloudScraper class that inherits from RequestsSession
-    # instead of ChameleonSession (curl_cffi)
-    class CloudScraperCompat(RequestsSession):
-        """CloudScraper using standard requests Session for 3.1.0 compatibility"""
-        pass
-    
-    # Copy all methods and attributes from CloudScraper to CloudScraperCompat
-    for attr_name in dir(CloudScraper):
-        if not attr_name.startswith('_') or attr_name in ['__init__', '__getstate__']:
-            attr = getattr(CloudScraper, attr_name)
-            if callable(attr) and not isinstance(attr, type):
-                # Bind methods to the new class
-                try:
-                    setattr(CloudScraperCompat, attr_name, attr)
-                except (TypeError, AttributeError):
-                    pass
-    
-    # Use CloudScraper's __init__ but with RequestsSession as parent
-    # We need to override the class hierarchy at instance level
-    scraper = CloudScraper(**kwargs)
-    
-    # Make the scraper behave like it's using standard requests
-    # by ensuring it doesn't use curl_cffi specific features
-    if hasattr(scraper, 'impersonate'):
-        delattr(scraper, 'impersonate') if hasattr(type(scraper), 'impersonate') else None
-    
-    if sess:
-        for attr in ['auth', 'cert', 'cookies', 'headers', 'hooks', 'params', 'proxies', 'data']:
-            val = getattr(sess, attr, None)
-            if val is not None:
-                setattr(scraper, attr, val)
-    
-    return scraper
+

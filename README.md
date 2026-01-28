@@ -2,7 +2,7 @@
 <img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-# CloudScraper v3.7.9 🚀
+# CloudScraper v3.8.0 🚀
 ### The Ultimate Cloudflare Bypass for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/ai-cloudscraper.svg?style=flat-square)](https://pypi.org/project/ai-cloudscraper/)
@@ -195,7 +195,7 @@ The most powerful mode available. Requires `cloudscraper[hybrid]`.
 
 scraper = cloudscraper.create_scraper(
     interpreter='hybrid',
-    impersonate='chrome120', # Optional: Force specific fingerprint
+
     google_api_key='YOUR_API_KEY' # Optional: For AI Captcha solving
 )
 scraper.get("https://hight-security-site.com")

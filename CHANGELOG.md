@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.8.0] - 2026-01-28
+- **Core Change**: Removed `tls-chameleon` dependency and disabled `curl_cffi` support by default.
+- **Stability**: Reverted to standard `requests`-based TLS handling (simulating 3.1.0 behavior) to resolve 403 errors on sites like HathiTrust.
+- **Fix**: Resolved 403 errors on sites like HathiTrust by defaulting to `requests`-based TLS handling.
+- **Removed**: `create_compat_scraper` function (redundant as main scraper is now fully compatible).
+- **Optimization**: Cleaned up dependencies in `setup.py`.
+
 ## [3.7.9] - 2026-01-28
 - **Metadata Update**: Updated author and maintainer contact information.
 - **Documentation**: Overhauled README.md with clearer value propositions, new badges, and ethical usage guidelines.
