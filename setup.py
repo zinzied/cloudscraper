@@ -24,7 +24,7 @@ with open('README.md', 'r', encoding='utf-8') as fp:
 setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
-    author_email='zied.boughdir@gmail.com',
+    author_email='zinzied@gmail.com',
     version='3.7.8',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     ext_modules = [],  # No Cython compilation needed
@@ -34,6 +34,12 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     url = 'https://github.com/zinzied/cloudscraper',
+    project_urls={
+        'Documentation': 'https://github.com/zinzied/cloudscraper#readme',
+        'Source': 'https://github.com/zinzied/cloudscraper',
+        'Tracker': 'https://github.com/zinzied/cloudscraper/issues',
+        'Changelog': 'https://github.com/zinzied/cloudscraper/blob/master/CHANGELOG.md',
+    },
     keywords = [
         'cloudflare',
         'scraping',

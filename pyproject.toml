@@ -10,10 +10,10 @@ description = "Enhanced Python library to bypass Cloudflare's anti-bot protectio
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-  { name="Zied Boughdir", email="zied.boughdir@gmail.com" },
+  { name="Zied Boughdir", email="zinzied@gmail.com" },
 ]
 maintainers = [
-    {name = "Zied Boughdir", email = "ziedboughdir@gmail.com"}
+    {name = "Zied Boughdir", email = "zinzied@gmail.com"}
 ]
 keywords = [
     "cloudflare",
