@@ -25,7 +25,7 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zinzied@gmail.com',
-    version='3.8.0',
+    version='3.8.1',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     ext_modules = [],  # No Cython compilation needed
     py_modules = [],
