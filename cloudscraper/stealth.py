@@ -69,11 +69,11 @@ class StealthMode:
 
     # ------------------------------------------------------------------------------- #
 
-    def apply_stealth_techniques(self, method, url, **kwargs):
+    def apply_stealth_techniques(self, method, url, skip_sleep=False, **kwargs):
         """Apply stealth stuff to make requests look human"""
 
         # Wait a bit between requests with adaptive timing
-        if self.human_like_delays:
+        if self.human_like_delays and not skip_sleep:
             self._wait_like_human(url)
 
         # Add screen size info
@@ -113,13 +113,13 @@ class StealthMode:
         # Basic random delay
         delay = random.uniform(self.min_delay, self.max_delay)
 
-        # Sometimes people read stuff
-        if random.random() < 0.3:
-            delay += random.uniform(2, 8)
+        # Sometimes people read stuff (reduced delay for speed)
+        if random.random() < 0.15:  # Reduced from 30%
+            delay += random.uniform(0.5, 2)
 
-        # Sometimes people get distracted
-        if random.random() < 0.05:
-            delay += random.uniform(10, 30)
+        # Sometimes people get distracted (reduced delay for speed)
+        if random.random() < 0.02:  # Reduced from 5%
+            delay += random.uniform(2, 5)
 
         # Same domain = faster (people know where stuff is)
         if url and hasattr(self, '_last_domain'):
@@ -139,7 +139,7 @@ class StealthMode:
             delay *= (1 - speed_up)
 
         # Don't wait forever
-        delay = min(delay, 45.0)
+        delay = min(delay, 10.0)  # Reduced from 45s
 
         if delay >= 0.1:
             time.sleep(delay)
@@ -362,7 +362,7 @@ class StealthMode:
             if len(recent_requests) > 10:  # High frequency
                 base_delay *= random.uniform(1.5, 2.0)  # Slow down
 
-        return min(base_delay, 45.0)  # Cap at 45 seconds
+        return min(base_delay, 10.0)  # Cap reduced from 45s
 
     def simulate_mouse_movement(self, kwargs):
         """

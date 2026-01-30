@@ -521,16 +521,16 @@ class MLBypassOrchestrator:
     
     def _get_current_behavior_profile(self) -> str:
         """Get current behavior profile"""
-        if hasattr(self.cloudscraper, 'timing_orchestrator'):
+        if hasattr(self.cloudscraper, 'timing_orchestrator') and self.cloudscraper.timing_orchestrator is not None:
             return self.cloudscraper.timing_orchestrator.adaptive_controller.behavior_simulator.current_profile
-        return 'unknown'
+        return 'casual'  # Default profile
     
     def _apply_strategy_to_scraper(self, strategy: Dict[str, Any]):
         """Apply strategy configuration to scraper"""
         config = strategy['config']
         
         # Apply behavior profile
-        if hasattr(self.cloudscraper, 'timing_orchestrator'):
+        if hasattr(self.cloudscraper, 'timing_orchestrator') and self.cloudscraper.timing_orchestrator is not None:
             behavior_profile = config.get('behavior_profile', 'casual')
             self.cloudscraper.timing_orchestrator.set_behavior_profile(behavior_profile)
         
@@ -543,7 +543,7 @@ class MLBypassOrchestrator:
         
         # Apply timing multiplier
         timing_multiplier = config.get('timing_multiplier', 1.0)
-        if hasattr(self.cloudscraper, 'timing_orchestrator'):
+        if hasattr(self.cloudscraper, 'timing_orchestrator') and self.cloudscraper.timing_orchestrator is not None:
             # This would require extending TimingOrchestrator to support multipliers
             logging.debug(f"Applied timing multiplier: {timing_multiplier}")
         

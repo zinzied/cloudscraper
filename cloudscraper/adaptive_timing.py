@@ -34,24 +34,24 @@ class HumanBehaviorSimulator:
     def __init__(self):
         self.behavior_profiles = {
             'casual': TimingProfile(
-                base_delay=1.5, min_delay=0.5, max_delay=3.0,
-                variance_factor=0.4, burst_threshold=3,
-                cooldown_multiplier=1.5, success_rate_threshold=0.8
+                base_delay=0.3, min_delay=0.05, max_delay=1.0,
+                variance_factor=0.2, burst_threshold=5,
+                cooldown_multiplier=1.2, success_rate_threshold=0.8
             ),
             'focused': TimingProfile(
-                base_delay=0.8, min_delay=0.3, max_delay=2.0,
-                variance_factor=0.3, burst_threshold=5,
-                cooldown_multiplier=1.2, success_rate_threshold=0.85
+                base_delay=0.2, min_delay=0.03, max_delay=0.8,
+                variance_factor=0.15, burst_threshold=8,
+                cooldown_multiplier=1.1, success_rate_threshold=0.85
             ),
             'research': TimingProfile(
-                base_delay=2.5, min_delay=1.0, max_delay=6.0,
-                variance_factor=0.6, burst_threshold=2,
-                cooldown_multiplier=2.0, success_rate_threshold=0.7
+                base_delay=0.8, min_delay=0.2, max_delay=2.0,
+                variance_factor=0.3, burst_threshold=4,
+                cooldown_multiplier=1.5, success_rate_threshold=0.7
             ),
             'mobile': TimingProfile(
-                base_delay=1.2, min_delay=0.5, max_delay=3.0,
-                variance_factor=0.4, burst_threshold=4,
-                cooldown_multiplier=1.3, success_rate_threshold=0.75
+                base_delay=0.3, min_delay=0.1, max_delay=1.0,
+                variance_factor=0.2, burst_threshold=6,
+                cooldown_multiplier=1.2, success_rate_threshold=0.75
             )
         }
         
@@ -145,26 +145,33 @@ class AdaptiveTimingController:
         # Adaptive parameters
         self.base_multiplier = 1.0
         self.success_threshold = 0.8
-        self.failure_penalty = 1.5
-        self.success_reward = 0.9
+        self.failure_penalty = 1.3  # Reduced from 1.5
+        self.success_reward = 0.95  # Reduced reward (closer to 1.0)
         
     def calculate_request_delay(self, domain: str, request_type: str = 'GET', 
-                              content_length: int = 1000, **kwargs) -> float:
+                               content_length: int = 1000, turbo_mode: bool = False, **kwargs) -> float:
         """Calculate optimal delay for next request"""
         
         profile = self.domain_profiles[domain]
         base_delay = self._get_base_delay(domain, request_type, content_length)
         
+        # In turbo mode, we aggressively reduce the base delay
+        if turbo_mode:
+            base_delay *= 0.2
+        
         # Apply adaptive multipliers
         adaptive_delay = self._apply_adaptive_multipliers(base_delay, profile)
         
-        # Add human behavior simulation
-        human_delay = self._add_human_behavior(adaptive_delay, request_type, content_length)
+        # Add human behavior simulation (mostly skipped in turbo mode)
+        if turbo_mode:
+            human_delay = adaptive_delay + 0.05  # Minimal jitter
+        else:
+            human_delay = self._add_human_behavior(adaptive_delay, request_type, content_length)
         
         # Apply domain-specific optimizations
-        optimized_delay = self._apply_domain_optimizations(human_delay, domain, profile)
+        optimized_delay = self._apply_domain_optimizations(human_delay, domain, profile, turbo_mode=turbo_mode)
         
-        return max(0.1, optimized_delay)  # Minimum 100ms delay
+        return max(0.01 if turbo_mode else 0.03, optimized_delay)
     
     def _get_base_delay(self, domain: str, request_type: str, content_length: int) -> float:
         """Get base delay from current behavior profile"""
@@ -225,21 +232,25 @@ class AdaptiveTimingController:
         return base_delay
     
     def _apply_domain_optimizations(self, delay: float, domain: str, 
-                                   profile: Dict[str, Any]) -> float:
+                                   profile: Dict[str, Any], turbo_mode: bool = False) -> float:
         """Apply domain-specific timing optimizations"""
         
         # Use optimal timing if we've learned it, but limit the influence
         if profile['optimal_timing']:
             optimal = profile['optimal_timing']
             # Blend current calculation with learned optimal timing (reduced influence)
-            delay = (delay * 0.8) + (optimal * 0.2)  # Reduced from 0.7/0.3 to 0.8/0.2
+            delay = (delay * 0.9) + (optimal * 0.1)
         
-        # Adjust based on domain's average response time, but cap the factor
-        response_time_factor = min(1.5, profile['avg_response_time'])  # Reduced from 2.0 to 1.5
+        # Adjust based on domain's average response time, but cap the factor very conservatively
+        # We don't want server slowness to cause massive local delays
+        response_time_factor = min(1.2, 1.0 + (profile['avg_response_time'] * 0.05))  
         delay *= response_time_factor
         
         # Apply final cap to prevent runaway delays
-        delay = min(10.0, delay)  # Hard cap at 10 seconds
+        if turbo_mode:
+            delay = min(0.3, delay)  # Aggressive cap for turbo mode
+        else:
+            delay = min(2.0, delay)  # Hard cap reduced to 2 seconds
         
         return delay
     
@@ -373,41 +384,46 @@ class SmartTimingOrchestrator:
         self.last_request_time = 0
         
     def calculate_optimal_delay(self, domain: str, request_type: str = 'GET',
-                               content_length: int = 1000, **kwargs) -> float:
+                               content_length: int = 1000, turbo_mode: bool = False, **kwargs) -> float:
         """Calculate the optimal delay for a request"""
         
         # Get base adaptive delay
         adaptive_delay = self.adaptive_controller.calculate_request_delay(
-            domain, request_type, content_length, **kwargs
+            domain, request_type, content_length, turbo_mode=turbo_mode, **kwargs
         )
         
-        # Apply circadian rhythm adjustment
-        circadian_multiplier = self.circadian_adjuster.get_circadian_multiplier()
+        # Circadian rhythm adjustment disabled by default for performance
+        # It adds too much overhead (often >5s) for a performance-focused library
+        circadian_multiplier = 1.0 
         circadian_adjusted_delay = adaptive_delay / circadian_multiplier
         
         # Ensure minimum time between requests
-        min_interval = self._calculate_minimum_interval(domain)
+        min_interval = self._calculate_minimum_interval(domain, turbo_mode=turbo_mode)
         time_since_last = time.time() - self.last_request_time
         
         if time_since_last < min_interval:
             additional_delay = min_interval - time_since_last
             circadian_adjusted_delay = max(circadian_adjusted_delay, additional_delay)
         
+        # Double check for absolute minimum in turbo mode
+        if turbo_mode:
+            circadian_adjusted_delay = min(0.5, circadian_adjusted_delay)
+
         return circadian_adjusted_delay
     
-    def _calculate_minimum_interval(self, domain: str) -> float:
+    def _calculate_minimum_interval(self, domain: str, turbo_mode: bool = False) -> float:
         """Calculate minimum interval between requests for a domain"""
         profile = self.adaptive_controller.domain_profiles[domain]
         
         # Base minimum interval
-        base_interval = 0.5
+        base_interval = 0.02 if turbo_mode else 0.1
         
-        # Increase interval if we're having issues
+        # Increase interval if we're having issues, but much less in turbo mode
         if profile['success_rate'] < 0.7:
-            base_interval *= 2.0
+            base_interval *= 1.2 if turbo_mode else 2.0
         
         if profile['consecutive_failures'] > 2:
-            base_interval *= 1.5
+            base_interval *= 1.2 if turbo_mode else 1.5
         
         return base_interval
     

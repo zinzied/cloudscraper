@@ -38,7 +38,11 @@ class CloudflareTurnstile():
 
     def __init__(self, cloudscraper):
         self.cloudscraper = cloudscraper
-        self.delay = self.cloudscraper.delay or random.uniform(1.0, 5.0)
+        # Reduce hardcoded delays for speed optimization
+        if getattr(self.cloudscraper, 'turbo_mode', False):
+            self.delay = self.cloudscraper.delay or random.uniform(0.05, 0.2)
+        else:
+            self.delay = self.cloudscraper.delay or random.uniform(0.1, 1.5)
 
     # ------------------------------------------------------------------------------- #
     # Check if the response contains a Cloudflare Turnstile challenge

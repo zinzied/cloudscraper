@@ -57,8 +57,8 @@ class TrafficPatternObfuscator:
         if domain not in self.timing_patterns:
             self.timing_patterns[domain] = {
                 'last_request': 0,
-                'avg_interval': random.uniform(1.0, 3.0),  # Reduced from 2.0-8.0
-                'variance': random.uniform(0.3, 1.0)      # Reduced from 0.5-2.0
+                'avg_interval': random.uniform(0.3, 1.0),  # Reduced for speed
+                'variance': random.uniform(0.1, 0.3)       # Reduced for speed
             }
         
         pattern = self.timing_patterns[domain]
@@ -182,7 +182,7 @@ class SessionDistributor:
         
         # If session has been idle, simulate user returning
         if time_since_last > 60:  # reduced from 300 (5 minutes) to 1 minute
-            return random.uniform(0.5, 2.0)  # reduced from 1.0-5.0
+            return random.uniform(0.1, 0.5)  # Faster return delay
         
         # Normal session timing
         return max(0, session['min_interval'] - time_since_last)
@@ -193,7 +193,7 @@ class SessionDistributor:
             'id': str(uuid.uuid4()),
             'created': time.time(),
             'last_activity': 0,
-            'min_interval': random.uniform(0.5, 1.5),  # reduced from 1.0-3.0
+            'min_interval': random.uniform(0.1, 0.3),  # Faster min interval
             'request_count': 0
         }
     

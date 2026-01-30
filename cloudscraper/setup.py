@@ -12,7 +12,7 @@ with open('README.md', 'r', encoding='utf-8') as fp:
 setup(
     name = 'cloudscraper',
     author = 'Zied Boughdir, VeNoMouS',
-    author_email = 'ziedboughdir@gmail.com',
+    author_email = 'zinzied@gmail.com',
     version=VERSION,
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     py_modules = [],

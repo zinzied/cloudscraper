@@ -77,13 +77,13 @@ from .hybrid_engine import HybridEngine
 
 # ------------------------------------------------------------------------------- #
 
-__version__ = '3.8.0'
+__version__ = '3.8.1'
 
 # ------------------------------------------------------------------------------- #
 
 __author__ = 'Zied Boughdir'
 __credits__ = ['Zied Boughdir']
-__email__ = 'zied.boughdir@gmail.com'
+__email__ = 'zinzied@gmail.com'
 __maintainer__ = 'Zied Boughdir'
 __status__ = 'Production'
 
@@ -297,7 +297,12 @@ class CloudScraperMixin(object):
 
         # Request throttling and TLS management
         self.last_request_time = 0
-        self.min_request_interval = kwargs.pop('min_request_interval', 1.0)  # Minimum 1 second between requests
+        self.turbo_mode = kwargs.pop('turbo_mode', False)
+        # If turbo mode, use minimal delays
+        if self.turbo_mode:
+            self.min_request_interval = kwargs.pop('min_request_interval', 0.05)  # Fast turbo mode
+        else:
+            self.min_request_interval = kwargs.pop('min_request_interval', 0.2)  # Faster default
         self.max_concurrent_requests = kwargs.pop('max_concurrent_requests', 1)  # Limit concurrent requests
         self.current_concurrent_requests = 0
         self.rotate_tls_ciphers = kwargs.pop('rotate_tls_ciphers', True)  # Enable TLS cipher rotation
@@ -306,20 +311,25 @@ class CloudScraperMixin(object):
         # Apply compatibility mode early to affect handler initialization
         if self.compatibility_mode:
             self.min_request_interval = 0
-            self.rotate_tls_ciphers = False
-            self.enable_stealth = False
-            # These will be used for initialization below
+            # Keep rotate_tls_ciphers as default (True) - needed for bypass
+            self.enable_stealth = True  # Critical for bypass
+            
+            # Disable only heavy monitoring overhead (not bypass-critical features)
             kwargs['enable_metrics'] = False
             kwargs['enable_performance_monitoring'] = False
-            kwargs['enable_tls_fingerprinting'] = False
-            kwargs['enable_tls_rotation'] = False
-            kwargs['enable_anti_detection'] = False
-            kwargs['enable_enhanced_spoofing'] = False
-            kwargs['enable_ml_optimization'] = False
-            kwargs['enable_enhanced_error_handling'] = False
-            kwargs['enable_adaptive_timing'] = False
+            
+            # ENABLE all essential bypass features (required for modern Cloudflare)
+            kwargs['enable_adaptive_timing'] = True  # ← CRITICAL: needed for challenge timing
+            kwargs['enable_ml_optimization'] = True  # ← CRITICAL: needed for challenge solving
+            kwargs['enable_enhanced_error_handling'] = True  # Helps with retries
+            kwargs['enable_anti_detection'] = True  # ← CRITICAL: header obfuscation
+            kwargs['enable_enhanced_spoofing'] = True  # ← CRITICAL: fingerprint consistency
+            kwargs['enable_tls_fingerprinting'] = True  # TLS handshake looks like real Chrome
+            kwargs['enable_tls_rotation'] = False  # Keep stable (no rotation overhead)
+            # NOTE: enable_intelligent_challenges is left as default (False) to prevent recursion
+            
             if self.debug:
-                print("Compatibility Mode: Forcing 3.1.0 parameters")
+                print("Compatibility Mode: All essential bypass features enabled")
 
         # Proxy management
         proxy_options = kwargs.pop('proxy_options', {})
@@ -335,8 +345,8 @@ class CloudScraperMixin(object):
 
         self.stealth_mode = StealthMode(
             cloudscraper=self,
-            min_delay=stealth_options.get('min_delay', 0.5),
-            max_delay=stealth_options.get('max_delay', 2.0),
+            min_delay=stealth_options.get('min_delay', 0.1),
+            max_delay=stealth_options.get('max_delay', 0.5),
             human_like_delays=stealth_options.get('human_like_delays', True),
             randomize_headers=stealth_options.get('randomize_headers', True),
             browser_quirks=stealth_options.get('browser_quirks', True),
