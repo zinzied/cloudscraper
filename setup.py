@@ -25,7 +25,7 @@ setup(
     name = 'ai-cloudscraper',
     author='Zied Boughdir',
     author_email='zinzied@gmail.com',
-    version='3.8.1',
+    version='3.8.2',
     packages = ['cloudscraper', 'cloudscraper.captcha', 'cloudscraper.interpreters', 'cloudscraper.user_agent'],
     ext_modules = [],  # No Cython compilation needed
     py_modules = [],
@@ -72,7 +72,8 @@ setup(
         'js2py >= 0.74',
         'brotli >= 1.1.0',
         'certifi >= 2024.2.2',
-        'ai-urllib4 >= 2.0.0'
+        'ai-urllib4 >= 2.0.0',
+        'psutil >= 5.9.0'
     ],
     extras_require={
         'ai': ['ddddocr', 'ultralytics', 'google-generativeai'],

@@ -2,7 +2,7 @@
 <img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-# CloudScraper v3.8.1 🚀
+# CloudScraper v3.8.2 🚀
 ### The Ultimate Cloudflare Bypass for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/ai-cloudscraper.svg?style=flat-square)](https://pypi.org/project/ai-cloudscraper/)
@@ -21,7 +21,7 @@ A powerful, actively maintained Python library to bypass Cloudflare's anti-bot p
 *   ✅ **Actively Maintained**: Weekly updates to stay ahead of Cloudflare (2026 Ready).
 *   ✅ **AI Powered**: Uses Google Gemini to visually solve complex CAPTCHAs.
 
-## 🔥 **NEW: Speed Bypass Enhancements (v3.8.1)** - 3-5x Faster
+## 🔥 **NEW: Speed Bypass Enhancements (v3.8.2)** - 3-5x Faster
 
 Default request timing has been significantly optimized:
 - **Timing profiles reduced**: Base delays from 0.8-1.5s → 0.2-0.3s
