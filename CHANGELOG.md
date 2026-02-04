@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.8.3] - 2026-02-04
+- **Fix**: Resolved `NameError: name 'Page' is not defined` in `trust_builder.py` when `playwright` is not installed.
+- **Improved Optional Dependencies**: Added dummy types and future annotations to handle missing optional dependencies more gracefully.
+
 ## [3.8.0] - 2026-01-28
 - **Core Change**: Removed `tls-chameleon` dependency and disabled `curl_cffi` support by default.
 - **Stability**: Reverted to standard `requests`-based TLS handling (simulating 3.1.0 behavior) to resolve 403 errors on sites like HathiTrust.

@@ -10,6 +10,7 @@ Usage:
     from cloudscraper.trust_builder import warm_get
     response = warm_get("https://hard-site.com/protected", depth=3)
 """
+from __future__ import annotations
 import asyncio
 import os
 import random
@@ -32,6 +33,10 @@ try:
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
+    # Define dummy types to avoid NameError in type hints
+    Page = Any
+    Browser = Any
+    Frame = Any
 try:
     from py_parkour import ParkourBot
     HAS_PARKOUR = True
