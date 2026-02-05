@@ -489,6 +489,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#turbo-mode-maximum-speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turbo Mode (Maximum Speed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-phase-1-2-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -693,6 +704,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#turbo-mode-maximum-speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turbo Mode (Maximum Speed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-phase-1-2-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -803,48 +825,53 @@ This is a maintained fork of the original cloudscraper library. You can use this
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">response</span> <span class="o">=</span> <span class="n">scraper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://protected-site.com&quot;</span><span class="p">)</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
+<h3 id="turbo-mode-maximum-speed">Turbo Mode (Maximum Speed)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Enable turbo mode for 3-5x faster bypasses</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">turbo_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">scraper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://protected-site.com&quot;</span><span class="p">)</span>
+</code></pre></div>
 <h3 id="using-phase-1-2-features">Using Phase 1 &amp; 2 Features</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">cloudscraper</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloudscraper.session_pool</span><span class="w"> </span><span class="kn">import</span> <span class="n">SessionPool</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Option 1: Default (Recommended for most sites)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">()</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">resp</span> <span class="o">=</span> <span class="n">scraper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://protected-site.com&#39;</span><span class="p">)</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Option 2: With hybrid interpreter (The &quot;Browser Bridge&quot;)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">interpreter</span><span class="o">=</span><span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">browser</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;browser&#39;</span><span class="p">:</span> <span class="s1">&#39;chrome&#39;</span><span class="p">,</span> <span class="s1">&#39;platform&#39;</span><span class="p">:</span> <span class="s1">&#39;windows&#39;</span><span class="p">,</span> <span class="s1">&#39;desktop&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># Option 3: With Hybrid Captcha Solver (AI + 2Captcha fallback)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">captcha</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="s1">&#39;provider&#39;</span><span class="p">:</span> <span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="s1">&#39;fallbacks&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;ai_ocr&#39;</span><span class="p">,</span> <span class="s1">&#39;2captcha&#39;</span><span class="p">],</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="s1">&#39;2captcha&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;api_key&#39;</span><span class="p">:</span> <span class="s1">&#39;YOUR_KEY&#39;</span><span class="p">}</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="p">}</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="p">)</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="c1"># Option 4: Session pool for maximum stealth</span>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">SessionPool</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">rotation_strategy</span><span class="o">=</span><span class="s1">&#39;round_robin&#39;</span><span class="p">)</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="n">resp</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://protected-site.com&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">cloudscraper</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloudscraper.session_pool</span><span class="w"> </span><span class="kn">import</span> <span class="n">SessionPool</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Option 1: Default (Recommended for most sites)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">()</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">resp</span> <span class="o">=</span> <span class="n">scraper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://protected-site.com&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Option 2: With hybrid interpreter (The &quot;Browser Bridge&quot;)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">interpreter</span><span class="o">=</span><span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">browser</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;browser&#39;</span><span class="p">:</span> <span class="s1">&#39;chrome&#39;</span><span class="p">,</span> <span class="s1">&#39;platform&#39;</span><span class="p">:</span> <span class="s1">&#39;windows&#39;</span><span class="p">,</span> <span class="s1">&#39;desktop&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="c1"># Option 3: With Hybrid Captcha Solver (AI + 2Captcha fallback)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="n">captcha</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="s1">&#39;provider&#39;</span><span class="p">:</span> <span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>        <span class="s1">&#39;fallbacks&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;ai_ocr&#39;</span><span class="p">,</span> <span class="s1">&#39;2captcha&#39;</span><span class="p">],</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>        <span class="s1">&#39;2captcha&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;api_key&#39;</span><span class="p">:</span> <span class="s1">&#39;YOUR_KEY&#39;</span><span class="p">}</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    <span class="p">}</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="p">)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="c1"># Option 4: Session pool for maximum stealth</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">SessionPool</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">rotation_strategy</span><span class="o">=</span><span class="s1">&#39;round_robin&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="n">resp</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://protected-site.com&#39;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="configuration">Configuration</h2>
 <h3 id="browser-selection">Browser Selection</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Use Chrome fingerprint</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">browser</span><span class="o">=</span><span class="s1">&#39;chrome&#39;</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Use Firefox fingerprint  </span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">browser</span><span class="o">=</span><span class="s1">&#39;firefox&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Use Chrome fingerprint</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">browser</span><span class="o">=</span><span class="s1">&#39;chrome&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Use Firefox fingerprint  </span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">browser</span><span class="o">=</span><span class="s1">&#39;firefox&#39;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="proxy-support">Proxy Support</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Single proxy</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">()</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">scraper</span><span class="o">.</span><span class="n">proxies</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s1">&#39;http&#39;</span><span class="p">:</span> <span class="s1">&#39;http://proxy:8080&#39;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s1">&#39;https&#39;</span><span class="p">:</span> <span class="s1">&#39;http://proxy:8080&#39;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Single proxy</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">()</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">scraper</span><span class="o">.</span><span class="n">proxies</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s1">&#39;http&#39;</span><span class="p">:</span> <span class="s1">&#39;http://proxy:8080&#39;</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="s1">&#39;https&#39;</span><span class="p">:</span> <span class="s1">&#39;http://proxy:8080&#39;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
 </code></pre></div>
 
 

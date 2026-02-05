@@ -505,10 +505,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-the-hybrid-engine-hybrid_enginepy" class="md-nav__link">
+  <a href="#1-turbo-mode-turbo_modetrue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. The Hybrid Engine (hybrid_engine.py)
+        1. Turbo Mode (turbo_mode=True)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-hybrid-engine-hybrid_enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Hybrid Engine (hybrid_engine.py)
       
     </span>
   </a>
@@ -632,10 +643,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-the-hybrid-engine-hybrid_enginepy" class="md-nav__link">
+  <a href="#1-turbo-mode-turbo_modetrue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. The Hybrid Engine (hybrid_engine.py)
+        1. Turbo Mode (turbo_mode=True)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-the-hybrid-engine-hybrid_enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Hybrid Engine (hybrid_engine.py)
       
     </span>
   </a>
@@ -675,8 +697,9 @@
 <h1 id="advanced-usage">Advanced Usage</h1>
 <p>This document describes the comprehensive enhancements made to CloudScraper to bypass the majority of Cloudflare-protected websites.</p>
 <h2 id="overview-of-enhancements">Overview of Enhancements</h2>
-<p>The enhanced CloudScraper includes 11 major new systems:</p>
+<p>The enhanced CloudScraper includes 12 major systems:</p>
 <ol>
+<li><strong>Turbo Mode</strong>: Maximum speed bypasses (3-5x faster)</li>
 <li><strong>Hybrid Engine</strong>: TLS-Chameleon + Py-Parkour Browser Bridge</li>
 <li><strong>Enhanced TLS Fingerprinting</strong>: JA3 randomization and cipher rotation</li>
 <li><strong>Advanced Anti-Detection</strong>: Traffic pattern obfuscation and payload spoofing</li>
@@ -690,17 +713,31 @@
 <li><strong>Behavioral Patterns</strong>: Integrated mouse/scroll simulation</li>
 </ol>
 <h2 id="feature-details">Feature Details</h2>
-<h3 id="1-the-hybrid-engine-hybrid_enginepy">1. The Hybrid Engine (<code>hybrid_engine.py</code>)</h3>
+<h3 id="1-turbo-mode-turbo_modetrue">1. Turbo Mode (<code>turbo_mode=True</code>)</h3>
+<p><strong>Purpose</strong>: Maximum speed bypasses for time-critical applications.</p>
+<p><strong>What it does</strong>:
+- Reduces all anti-detection delays to minimum safe values (0.01-0.05s)
+- Auto-switches to Node.js interpreter for faster JS execution
+- Optimizes challenge handler timing across v1, v2, v3, and Turnstile</p>
+<p><strong>Usage</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span><span class="n">turbo_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>When to use</strong>:
+- ✅ Speed-critical applications
+- ✅ Batch processing large numbers of URLs
+- ⚠️ Not recommended for sites with aggressive rate limiting</p>
+<hr />
+<h3 id="2-the-hybrid-engine-hybrid_enginepy">2. The Hybrid Engine (<code>hybrid_engine.py</code>)</h3>
 <p><strong>Purpose</strong>: The most powerful bypass mechanism available, combining the speed of HTTP requests with the capability of a real browser.</p>
 <p><strong>Key Components</strong>:
 - <code>TLS-Chameleon</code> (<code>curl_cffi</code>): Provides low-level TLS fingerprint spoofing (JA3/JA4).
 - <code>Py-Parkour</code> (<code>playwright</code>): Acts as a "Browser Bridge".
 - <code>HybridEngine</code>: Coordinates the handoff.</p>
 <p><strong>Usage</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">interpreter</span><span class="o">=</span><span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">impersonate</span><span class="o">=</span><span class="s1">&#39;chrome120&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">scraper</span> <span class="o">=</span> <span class="n">cloudscraper</span><span class="o">.</span><span class="n">create_scraper</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">interpreter</span><span class="o">=</span><span class="s1">&#39;hybrid&#39;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">impersonate</span><span class="o">=</span><span class="s1">&#39;chrome120&#39;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
 </code></pre></div></p>
 <p>[... content from ENHANCED_FEATURES.md would continue here ...]</p>
 
