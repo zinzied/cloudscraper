@@ -2,7 +2,7 @@
 <img src="cloudscraper.png" alt="CloudScraper Logo" width="100%">
 </div>
 
-# CloudScraper v3.8.3 🚀
+# CloudScraper v3.8.4 🚀
 ### The Ultimate Cloudflare Bypass for Python
 
 [![PyPI version](https://img.shields.io/pypi/v/ai-cloudscraper.svg?style=flat-square)](https://pypi.org/project/ai-cloudscraper/)
@@ -21,19 +21,23 @@ A powerful, actively maintained Python library to bypass Cloudflare's anti-bot p
 *   ✅ **Actively Maintained**: Weekly updates to stay ahead of Cloudflare (2026 Ready).
 *   ✅ **AI Powered**: Uses Google Gemini to visually solve complex CAPTCHAs.
 
-## 🔥 **NEW: Speed Bypass Enhancements (v3.8.3)** - 3-5x Faster
+## 🚀 **NEW: Turbo Mode (v3.8.4)** - 3-5x Faster Bypasses
 
-Default request timing has been significantly optimized:
-- **Timing profiles reduced**: Base delays from 0.8-1.5s → 0.2-0.3s
-- **Request intervals reduced**: Default from 1.0s → 0.2s  
-- **Challenge delays reduced**: Cloudflare handler delays 3x faster
-- **No configuration needed**: Speed improvements apply automatically
+Enable **Turbo Mode** for maximum speed when you need fast bypasses:
 
 ```python
-# Just create a scraper - it's already faster!
-scraper = cloudscraper.create_scraper(debug=True)
+import cloudscraper
+
+# Maximum speed bypass - 3-5x faster!
+scraper = cloudscraper.create_scraper(turbo_mode=True)
 response = scraper.get("https://protected-site.com")
 ```
+
+| Component | Normal Mode | Turbo Mode |
+|-----------|-------------|------------|
+| Base delays | 0.8-1.5s | 0.2-0.3s |
+| Request intervals | 1.0s | 0.02-0.1s |
+| JS Interpreter | js2py | Node.js (auto) |
 
 ## 🔥 **AI Captcha Bypass (v3.4.0)** - Vision-Powered Solving
 

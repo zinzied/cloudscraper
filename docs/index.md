@@ -2,7 +2,7 @@
 
 A powerful, feature-rich Python library to bypass Cloudflare's anti-bot protection.
 
-**CloudScraper AI** (v3.7.8) is the next-generation successor to the original `cloudscraper` library. It features **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring.
+**CloudScraper AI** (v3.8.4) is the next-generation successor to the original `cloudscraper` library. It features **10+ production-ready bypass strategies**, cutting-edge advanced stealth capabilities, async support, and comprehensive monitoring.
 
 This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integrating `TLS-Chameleon` and `Py-Parkour` for the ultimate bypass capability now powered by **Google Gemini AI**.
 
@@ -11,6 +11,7 @@ This **Hybrid Edition** includes the revolutionary **Hybrid Engine**, integratin
 
 ## 🔥 Key Features
 
+- **🚀 Turbo Mode**: Maximum speed bypasses with `turbo_mode=True` (3-5x faster)
 - **🛡️ Hybrid Engine**: Automatically switches between lightweight requests and real browser solving
 - **🤖 AI Captcha Solver**: Solves reCAPTCHA v2 using Google Gemini Vision
 - **🔐 TLS Fingerprinting**: JA3 fingerprint rotation with real browser signatures (Chrome, Firefox, Safari) via `tls-chameleon`

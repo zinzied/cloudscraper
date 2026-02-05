@@ -8,6 +8,7 @@
 | `delay` | float | `None` | Override challenge delay |
 | `interpreter` | str | `'js2py'` | JavaScript interpreter (`'js2py'`, `'nodejs'`, `'native'`, `'hybrid'`) |
 | `browser` | str/dict | `None` | Browser fingerprint (`'chrome'`, `'firefox'`, `'safari'`) |
+| `turbo_mode` | bool | `False` | Maximum speed mode with minimal delays (3-5x faster) |
 
 ### Example: Basic Configuration
 

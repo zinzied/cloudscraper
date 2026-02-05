@@ -34,28 +34,33 @@ class HumanBehaviorSimulator:
     def __init__(self):
         self.behavior_profiles = {
             'casual': TimingProfile(
-                base_delay=0.3, min_delay=0.05, max_delay=1.0,
-                variance_factor=0.2, burst_threshold=5,
-                cooldown_multiplier=1.2, success_rate_threshold=0.8
+                base_delay=0.05, min_delay=0.01, max_delay=0.3,
+                variance_factor=0.1, burst_threshold=10,
+                cooldown_multiplier=1.1, success_rate_threshold=0.8
             ),
             'focused': TimingProfile(
-                base_delay=0.2, min_delay=0.03, max_delay=0.8,
-                variance_factor=0.15, burst_threshold=8,
-                cooldown_multiplier=1.1, success_rate_threshold=0.85
+                base_delay=0.03, min_delay=0.01, max_delay=0.2,
+                variance_factor=0.05, burst_threshold=15,
+                cooldown_multiplier=1.05, success_rate_threshold=0.85
             ),
             'research': TimingProfile(
-                base_delay=0.8, min_delay=0.2, max_delay=2.0,
-                variance_factor=0.3, burst_threshold=4,
-                cooldown_multiplier=1.5, success_rate_threshold=0.7
+                base_delay=0.1, min_delay=0.02, max_delay=0.5,
+                variance_factor=0.1, burst_threshold=8,
+                cooldown_multiplier=1.2, success_rate_threshold=0.7
             ),
             'mobile': TimingProfile(
-                base_delay=0.3, min_delay=0.1, max_delay=1.0,
-                variance_factor=0.2, burst_threshold=6,
-                cooldown_multiplier=1.2, success_rate_threshold=0.75
+                base_delay=0.05, min_delay=0.02, max_delay=0.3,
+                variance_factor=0.1, burst_threshold=10,
+                cooldown_multiplier=1.1, success_rate_threshold=0.75
+            ),
+            'speed': TimingProfile(
+                base_delay=0.01, min_delay=0.001, max_delay=0.1,
+                variance_factor=0.02, burst_threshold=20,
+                cooldown_multiplier=1.0, success_rate_threshold=0.9
             )
         }
         
-        self.current_profile = 'casual'
+        self.current_profile = 'speed'  # Default to speed profile
         self.session_start = time.time()
         self.activity_periods = []
         self.fatigue_factor = 1.0
@@ -157,7 +162,7 @@ class AdaptiveTimingController:
         
         # In turbo mode, we aggressively reduce the base delay
         if turbo_mode:
-            base_delay *= 0.2
+            return 0.001
         
         # Apply adaptive multipliers
         adaptive_delay = self._apply_adaptive_multipliers(base_delay, profile)
@@ -416,6 +421,8 @@ class SmartTimingOrchestrator:
         profile = self.adaptive_controller.domain_profiles[domain]
         
         # Base minimum interval
+        if turbo_mode:
+            return 0.0
         base_interval = 0.02 if turbo_mode else 0.1
         
         # Increase interval if we're having issues, but much less in turbo mode

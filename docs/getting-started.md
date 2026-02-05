@@ -38,6 +38,14 @@ response = scraper.get("https://protected-site.com")
 print(response.text)
 ```
 
+### Turbo Mode (Maximum Speed)
+
+```python
+# Enable turbo mode for 3-5x faster bypasses
+scraper = cloudscraper.create_scraper(turbo_mode=True)
+response = scraper.get("https://protected-site.com")
+```
+
 ### Using Phase 1 & 2 Features
 
 ```python

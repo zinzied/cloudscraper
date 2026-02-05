@@ -410,7 +410,15 @@ class Cloudflare():
                         "Cloudflare IUAM possibility malformed, issue extracing delay value."
                     )
 
-            # Apply speed optimization: reduce delay in turbo mode\r\n            effective_delay = self.cloudscraper.delay\r\n            if getattr(self.cloudscraper, 'turbo_mode', False):\r\n                effective_delay = max(0.5, self.cloudscraper.delay * 0.5)  # 50% faster, min 0.5s\r\n            time.sleep(effective_delay)
+            # Apply speed optimization: reduce delay for all modes
+            effective_delay = self.cloudscraper.delay
+            if getattr(self.cloudscraper, 'turbo_mode', False):
+                # Extremely aggressive in turbo mode: 5% of delay, min 0.05s
+                effective_delay = max(0.05, self.cloudscraper.delay * 0.05)
+            else:
+                # Standard mode: 20% of original delay, min 0.2s
+                effective_delay = max(0.2, self.cloudscraper.delay * 0.2)
+            time.sleep(effective_delay)
 
             # ------------------------------------------------------------------------------- #
 

@@ -210,8 +210,26 @@ class CloudScraperMixin(object):
             self.circuit_breaker = None
         # Performance Parity / Compatibility Mode
         self.compatibility_mode = kwargs.pop('compatibility_mode', False)
-        
-        self.interpreter = kwargs.pop('interpreter', 'js2py')  # Default to js2py for better compatibility
+        self.turbo_mode = kwargs.pop('turbo_mode', False)  # Grab turbo mode early
+
+        # Check for Node.js availability
+        try:
+            import subprocess
+            node_check = subprocess.run(
+                ['node', '--version'], 
+                capture_output=True, 
+                shell=True if sys.platform == 'win32' else False
+            )
+            has_node = node_check.returncode == 0
+        except (ImportError, Exception):
+            has_node = False
+
+        default_interpreter = 'js2py'
+        # Prefer Node.js in turbo mode or simply if available for speed
+        if self.turbo_mode and has_node:
+            default_interpreter = 'nodejs'
+
+        self.interpreter = kwargs.pop('interpreter', default_interpreter)
 
         # AI-Urllib4 / Intelligent Request options
         self.ai_optimize = kwargs.pop('ai_optimize', False)
@@ -297,7 +315,6 @@ class CloudScraperMixin(object):
 
         # Request throttling and TLS management
         self.last_request_time = 0
-        self.turbo_mode = kwargs.pop('turbo_mode', False)
         # If turbo mode, use minimal delays
         if self.turbo_mode:
             self.min_request_interval = kwargs.pop('min_request_interval', 0.05)  # Fast turbo mode
@@ -314,6 +331,9 @@ class CloudScraperMixin(object):
             # Keep rotate_tls_ciphers as default (True) - needed for bypass
             self.enable_stealth = True  # Critical for bypass
             
+            # SPEED OPTIMIZATION: Apply turbo-like speed settings
+            self.turbo_mode = True  # Enable turbo behaviors for speed
+            
             # Disable only heavy monitoring overhead (not bypass-critical features)
             kwargs['enable_metrics'] = False
             kwargs['enable_performance_monitoring'] = False
@@ -329,7 +349,7 @@ class CloudScraperMixin(object):
             # NOTE: enable_intelligent_challenges is left as default (False) to prevent recursion
             
             if self.debug:
-                print("Compatibility Mode: All essential bypass features enabled")
+                print("Compatibility Mode: Speed optimizations + all essential bypass features enabled")
 
         # Proxy management
         proxy_options = kwargs.pop('proxy_options', {})
@@ -695,17 +715,28 @@ class CloudScraperMixin(object):
                 method, url, **kwargs
             )
             if should_delay and delay_time > 0:
-                if self.debug:
-                    print(f'Anti-detection delay: {delay_time:.2f}s')
-                time.sleep(delay_time)
+                # Reduce delay significantly - cap at 0.1s max
+                delay_time = min(0.1, delay_time * 0.2)
+                if getattr(self, 'turbo_mode', False):
+                    if self.debug:
+                        print(f'Anti-detection delay skipped (Turbo Mode): {delay_time:.2f}s')
+                else:
+                    if self.debug:
+                        print(f'Anti-detection delay: {delay_time:.2f}s')
+                    time.sleep(delay_time)
 
-        # Apply adaptive timing if enabled
-        if self.timing_orchestrator:
+        # Apply adaptive timing if enabled (skip in turbo mode for max speed)
+        if self.timing_orchestrator and not getattr(self, 'turbo_mode', False):
             content_length = self._estimate_content_length(kwargs)
+            # Use calculate_optimal_delay which handles everything including turbo logic
             optimal_delay = self.timing_orchestrator.calculate_optimal_delay(
-                urlparse(url).netloc, method, content_length
+                urlparse(url).netloc, 
+                request_type=method, 
+                content_length=content_length,
+                turbo_mode=getattr(self, 'turbo_mode', False)
             )
-            if optimal_delay > 0.1:  # Only apply significant delays
+            
+            if optimal_delay > 0.005:  # Only apply significant delays
                 if self.debug:
                     print(f'Adaptive timing delay: {optimal_delay:.2f}s')
                 self.timing_orchestrator.execute_delay(optimal_delay, urlparse(url).netloc)

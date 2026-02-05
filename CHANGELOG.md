@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.8.4] - 2026-02-05
+
+### 🚀 **TURBO MODE - Maximum Speed Bypass**
+
+- **NEW**: `turbo_mode` parameter for ultra-fast Cloudflare bypasses
+- **Performance**: 3-5x faster bypass times when enabled
+- **Optimized Delays**: Reduces all anti-detection delays to minimum safe values (0.01-0.05s)
+- **Smart Interpreter**: Auto-switches to Node.js interpreter for faster JS execution when available
+- **Challenge Handler Optimizations**: All challenge handlers (v1, v2, v3, Turnstile) now respect turbo mode
+
+### 🔧 **Usage**
+
+```python
+import cloudscraper
+
+# Enable turbo mode for maximum speed
+scraper = cloudscraper.create_scraper(turbo_mode=True)
+
+# Use with other options
+scraper = cloudscraper.create_scraper(
+    turbo_mode=True,
+    debug=True
+)
+
+response = scraper.get("https://protected-site.com")
+```
+
+### ⚡ **What Turbo Mode Does**
+
+| Component | Normal Mode | Turbo Mode |
+|-----------|-------------|------------|
+| Base delays | 0.8-1.5s | 0.2-0.3s |
+| Request intervals | 1.0s | 0.02-0.1s |
+| Challenge delays | Variable | Minimal |
+| JS Interpreter | js2py (default) | Node.js (auto) |
+
+### ⚠️ **When to Use**
+
+- **Recommended**: Speed-critical applications, batch processing
+- **Not Recommended**: Sites with aggressive rate limiting, stealth-critical operations
+
+---
+
 ## [3.8.3] - 2026-02-04
 - **Fix**: Resolved `NameError: name 'Page' is not defined` in `trust_builder.py` when `playwright` is not installed.
 - **Improved Optional Dependencies**: Added dummy types and future annotations to handle missing optional dependencies more gracefully.
